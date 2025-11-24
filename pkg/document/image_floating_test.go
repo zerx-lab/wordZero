@@ -234,9 +234,10 @@ func TestMultipleFloatingImages(t *testing.T) {
 		t.Fatalf("打开保存的文档失败: %v", err)
 	}
 
-	// 应该有5个元素（3个段落 + 2个图片段落）
-	if len(doc2.Body.Elements) != 5 {
-		t.Errorf("期望5个元素，实际 %d 个", len(doc2.Body.Elements))
+	// 应该有5个元素（3个文本段落 + 2个图片段落）
+	const expectedElements = 5 // 3 text paragraphs + 2 image paragraphs
+	if len(doc2.Body.Elements) != expectedElements {
+		t.Errorf("期望%d个元素（3个文本段落+2个图片段落），实际 %d 个", expectedElements, len(doc2.Body.Elements))
 	}
 
 	t.Logf("✓ 多个浮动图片测试通过")

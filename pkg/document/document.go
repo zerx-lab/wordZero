@@ -191,9 +191,6 @@ type Run struct {
 // MarshalXML 自定义Run的XML序列化
 // 此方法确保只有非空元素才被序列化，特别是对于Drawing元素
 func (r *Run) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	// 设置命名空间
-	start.Name = xml.Name{Local: "w:r"}
-	
 	// 开始Run元素
 	if err := e.EncodeToken(start); err != nil {
 		return err
