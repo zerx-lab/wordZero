@@ -46,6 +46,7 @@
 - [`AddFormattedParagraph(text string, format *TextFormat)`](document.go#L459) - 添加格式化段落
 - [`AddHeadingParagraph(text string, level int)`](document.go#L682) - 添加标题段落
 - [`AddHeadingParagraphWithBookmark(text string, level int, bookmarkName string)`](document.go#L747) - 添加带书签的标题段落 ✨ **新增功能**
+- [`AddPageBreak()`](document.go#L1185) - 添加分页符
 
 #### 标题段落书签功能 ✨
 `AddHeadingParagraphWithBookmark` 方法现在支持为标题段落添加书签：
