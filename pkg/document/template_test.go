@@ -670,3 +670,203 @@ func createTestImageData() []byte {
 		0x42, 0x60, 0x82,
 	}
 }
+
+// TestNestedLoops 测试嵌套循环功能
+func TestNestedLoops(t *testing.T) {
+	engine := NewTemplateEngine()
+
+	// 创建包含嵌套循环的模板
+	templateContent := `会议纪要
+
+日期：{{date}}
+
+参会人员：
+{{#each attendees}}
+- {{name}} ({{role}})
+  任务清单：
+  {{#each tasks}}
+  * {{taskName}} - 状态: {{status}}
+  {{/each}}
+{{/each}}
+
+会议总结：{{summary}}`
+
+	template, err := engine.LoadTemplate("meeting_minutes", templateContent)
+	if err != nil {
+		t.Fatalf("Failed to load template with nested loops: %v", err)
+	}
+
+	if len(template.Blocks) < 1 {
+		t.Error("Expected at least 1 block in template")
+	}
+
+	// 创建嵌套数据结构
+	data := NewTemplateData()
+	data.SetVariable("date", "2024-12-01")
+	data.SetVariable("summary", "会议圆满结束")
+
+	attendees := []interface{}{
+		map[string]interface{}{
+			"name": "张三",
+			"role": "项目经理",
+			"tasks": []interface{}{
+				map[string]interface{}{
+					"taskName": "制定项目计划",
+					"status":   "进行中",
+				},
+				map[string]interface{}{
+					"taskName": "分配资源",
+					"status":   "已完成",
+				},
+			},
+		},
+		map[string]interface{}{
+			"name": "李四",
+			"role": "开发工程师",
+			"tasks": []interface{}{
+				map[string]interface{}{
+					"taskName": "实现核心功能",
+					"status":   "进行中",
+				},
+				map[string]interface{}{
+					"taskName": "编写单元测试",
+					"status":   "待开始",
+				},
+			},
+		},
+	}
+	data.SetList("attendees", attendees)
+
+	// 渲染模板
+	doc, err := engine.RenderToDocument("meeting_minutes", data)
+	if err != nil {
+		t.Fatalf("Failed to render template with nested loops: %v", err)
+	}
+
+	if doc == nil {
+		t.Fatal("Expected document to be created")
+	}
+
+	// 验证文档内容
+	if len(doc.Body.Elements) == 0 {
+		t.Error("Expected document to have content")
+	}
+
+	// 检查生成的内容是否包含预期的嵌套数据
+	foundNestedContent := false
+	for _, element := range doc.Body.Elements {
+		if para, ok := element.(*Paragraph); ok {
+			fullText := ""
+			for _, run := range para.Runs {
+				fullText += run.Text.Content
+			}
+
+			// 检查是否包含嵌套循环生成的内容（任务名称）
+			if fullText == "  * 制定项目计划 - 状态: 进行中" ||
+				fullText == "  * 实现核心功能 - 状态: 进行中" {
+				foundNestedContent = true
+			}
+
+			// 确保没有未处理的模板语法
+			if fullText == "{{#each tasks}}" || fullText == "  * {{taskName}} - 状态: {{status}}" {
+				t.Errorf("Found unprocessed template syntax in output: %s", fullText)
+			}
+		}
+	}
+
+	if !foundNestedContent {
+		t.Error("Expected to find nested loop content in rendered document")
+	}
+}
+
+// TestDeepNestedLoops 测试深度嵌套循环（三层）
+func TestDeepNestedLoops(t *testing.T) {
+	engine := NewTemplateEngine()
+
+	// 创建三层嵌套循环的模板
+	templateContent := `组织架构：
+{{#each departments}}
+部门：{{name}}
+{{#each teams}}
+  团队：{{teamName}}
+  {{#each members}}
+    成员：{{memberName}} - {{position}}
+  {{/each}}
+{{/each}}
+{{/each}}`
+
+	_, err := engine.LoadTemplate("org_structure", templateContent)
+	if err != nil {
+		t.Fatalf("Failed to load template with deep nested loops: %v", err)
+	}
+
+	// 创建三层嵌套数据
+	data := NewTemplateData()
+
+	departments := []interface{}{
+		map[string]interface{}{
+			"name": "技术部",
+			"teams": []interface{}{
+				map[string]interface{}{
+					"teamName": "前端团队",
+					"members": []interface{}{
+						map[string]interface{}{
+							"memberName": "王五",
+							"position":   "前端工程师",
+						},
+						map[string]interface{}{
+							"memberName": "赵六",
+							"position":   "UI设计师",
+						},
+					},
+				},
+				map[string]interface{}{
+					"teamName": "后端团队",
+					"members": []interface{}{
+						map[string]interface{}{
+							"memberName": "孙七",
+							"position":   "后端工程师",
+						},
+					},
+				},
+			},
+		},
+	}
+	data.SetList("departments", departments)
+
+	// 渲染模板
+	doc, err := engine.RenderToDocument("org_structure", data)
+	if err != nil {
+		t.Fatalf("Failed to render template with deep nested loops: %v", err)
+	}
+
+	if doc == nil {
+		t.Fatal("Expected document to be created")
+	}
+
+	// 验证第三层嵌套内容是否正确渲染
+	foundDeepContent := false
+	for _, element := range doc.Body.Elements {
+		if para, ok := element.(*Paragraph); ok {
+			fullText := ""
+			for _, run := range para.Runs {
+				fullText += run.Text.Content
+			}
+
+			// 检查第三层嵌套内容
+			if fullText == "    成员：王五 - 前端工程师" ||
+				fullText == "    成员：孙七 - 后端工程师" {
+				foundDeepContent = true
+			}
+
+			// 确保没有未处理的模板语法
+			if fullText == "{{#each members}}" || fullText == "    成员：{{memberName}} - {{position}}" {
+				t.Errorf("Found unprocessed template syntax in deep nested output: %s", fullText)
+			}
+		}
+	}
+
+	if !foundDeepContent {
+		t.Error("Expected to find deep nested loop content in rendered document")
+	}
+}
