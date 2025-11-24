@@ -188,6 +188,64 @@ type Run struct {
 	InstrText  *InstrText      `xml:"w:instrText,omitempty"`
 }
 
+// MarshalXML 自定义Run的XML序列化
+// 此方法确保只有非空元素才被序列化，特别是对于Drawing元素
+func (r *Run) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	// 设置命名空间
+	start.Name = xml.Name{Local: "w:r"}
+	
+	// 开始Run元素
+	if err := e.EncodeToken(start); err != nil {
+		return err
+	}
+
+	// 序列化RunProperties（如果存在）
+	if r.Properties != nil {
+		if err := e.EncodeElement(r.Properties, xml.StartElement{Name: xml.Name{Local: "w:rPr"}}); err != nil {
+			return err
+		}
+	}
+
+	// 序列化Text（仅当有内容时）
+	// 这是关键修复：避免序列化空的Text元素
+	if r.Text.Content != "" {
+		if err := e.EncodeElement(r.Text, xml.StartElement{Name: xml.Name{Local: "w:t"}}); err != nil {
+			return err
+		}
+	}
+
+	// 序列化Break（如果存在）
+	if r.Break != nil {
+		if err := e.EncodeElement(r.Break, xml.StartElement{Name: xml.Name{Local: "w:br"}}); err != nil {
+			return err
+		}
+	}
+
+	// 序列化Drawing（如果存在）
+	if r.Drawing != nil {
+		if err := e.EncodeElement(r.Drawing, xml.StartElement{Name: xml.Name{Local: "w:drawing"}}); err != nil {
+			return err
+		}
+	}
+
+	// 序列化FieldChar（如果存在）
+	if r.FieldChar != nil {
+		if err := e.EncodeElement(r.FieldChar, xml.StartElement{Name: xml.Name{Local: "w:fldChar"}}); err != nil {
+			return err
+		}
+	}
+
+	// 序列化InstrText（如果存在）
+	if r.InstrText != nil {
+		if err := e.EncodeElement(r.InstrText, xml.StartElement{Name: xml.Name{Local: "w:instrText"}}); err != nil {
+			return err
+		}
+	}
+
+	// 结束Run元素
+	return e.EncodeToken(xml.EndElement{Name: start.Name})
+}
+
 // RunProperties 文本属性
 // 注意：字段顺序必须符合OpenXML标准，w:rFonts必须在w:color之前
 type RunProperties struct {
