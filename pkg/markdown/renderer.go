@@ -149,6 +149,13 @@ func (r *WordRenderer) renderInlineContent(node ast.Node, para *document.Paragra
 		case *ast.Text:
 			text := string(n.Segment.Value(r.source))
 			para.AddFormattedText(text, nil)
+			
+			// 处理软换行（单个\n）
+			// goldmark将单个\n解析为多个Text节点，第一个节点的SoftLineBreak为true
+			// 在Markdown中，软换行通常应该被渲染为空格
+			if n.SoftLineBreak() {
+				para.AddFormattedText(" ", nil)
+			}
 
 		case *ast.Emphasis:
 			text := r.extractTextContent(n)
@@ -576,6 +583,11 @@ func (r *WordRenderer) renderTaskItemContent(parent ast.Node, para *document.Par
 		case *ast.Text:
 			text := string(n.Segment.Value(r.source))
 			para.AddFormattedText(text, nil)
+			
+			// 处理软换行（单个\n）
+			if n.SoftLineBreak() {
+				para.AddFormattedText(" ", nil)
+			}
 		case *ast.Emphasis:
 			text := r.extractTextContent(n)
 			if n.Level == 2 {

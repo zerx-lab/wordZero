@@ -236,3 +236,74 @@ func TestTaskListCheckboxes(t *testing.T) {
 		t.Errorf("Expected at least 2 paragraphs for task items, got %d", len(paragraphs))
 	}
 }
+
+// TestMarkdownSoftLineBreaks 测试Markdown软换行（单个\n）的处理
+func TestMarkdownSoftLineBreaks(t *testing.T) {
+	tests := []struct {
+		name        string
+		markdown    string
+		wantErr     bool
+		description string
+	}{
+		{
+			name:        "单个软换行",
+			markdown:    "第一行\n第二行",
+			wantErr:     false,
+			description: "两行文本用单个换行符分隔，应该在Word中用空格连接",
+		},
+		{
+			name:        "多个软换行",
+			markdown:    "第一行\n第二行\n第三行",
+			wantErr:     false,
+			description: "多行文本用单个换行符分隔",
+		},
+		{
+			name:        "混合格式与软换行",
+			markdown:    "**粗体文本**\n*斜体文本*\n普通文本",
+			wantErr:     false,
+			description: "格式化文本混合软换行",
+		},
+		{
+			name: "问题报告中的内容",
+			markdown: `
+**日期：** 2024年___月___日 
+
+---
+
+### **附件关键条款索引** 
+#### **附件一（V2）核心约束：** 
+| 任务 | 法律要点 |
+|------|---------|
+| 任务1 | 要点1 |`,
+			wantErr:     false,
+			description: "实际问题报告中的Markdown内容，包含软换行和表格",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts := markdown.DefaultOptions()
+			opts.EnableGFM = true
+			opts.EnableTables = true
+			converter := markdown.NewConverter(opts)
+
+			doc, err := converter.ConvertString(tt.markdown, opts)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConvertString() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if doc == nil && !tt.wantErr {
+				t.Error("ConvertString() returned nil document")
+				return
+			}
+
+			// 验证文档至少有一些内容
+			if doc != nil {
+				if len(doc.Body.Elements) == 0 {
+					t.Error("Expected document to have some content")
+				}
+			}
+		})
+	}
+}
