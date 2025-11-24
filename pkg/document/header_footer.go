@@ -4,6 +4,8 @@ package document
 import (
 	"encoding/xml"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 // HeaderFooterType 页眉页脚类型
@@ -511,13 +513,15 @@ func createFormattedParagraph(text string, format *TextFormat, alignment Alignme
 
 			// 设置字体颜色
 			if format.FontColor != "" {
-				runProps.Color = &Color{Val: format.FontColor}
+				// 确保颜色格式正确（移除#前缀）
+				color := strings.TrimPrefix(format.FontColor, "#")
+				runProps.Color = &Color{Val: color}
 			}
 
 			// 设置字体大小
 			if format.FontSize > 0 {
 				// Word中字体大小是半磅为单位，所以需要乘以2
-				runProps.FontSize = &FontSize{Val: fmt.Sprintf("%d", format.FontSize*2)}
+				runProps.FontSize = &FontSize{Val: strconv.Itoa(format.FontSize * 2)}
 			}
 
 			// 设置下划线
@@ -574,7 +578,7 @@ func (d *Document) AddFormattedHeader(headerType HeaderFooterType, config *Heade
 	header.Paragraphs = append(header.Paragraphs, paragraph)
 
 	// 生成关系ID
-	headerID := fmt.Sprintf("rId%d", len(d.documentRelationships.Relationships)+2)
+	headerID := fmt.Sprintf("rId%d", len(d.documentRelationships.Relationships)+2) // +2因为rId1保留给styles
 
 	// 序列化页眉
 	headerXML, err := xml.MarshalIndent(header, "", "  ")
@@ -639,7 +643,7 @@ func (d *Document) AddFormattedFooter(footerType HeaderFooterType, config *Heade
 	footer.Paragraphs = append(footer.Paragraphs, paragraph)
 
 	// 生成关系ID
-	footerID := fmt.Sprintf("rId%d", len(d.documentRelationships.Relationships)+2)
+	footerID := fmt.Sprintf("rId%d", len(d.documentRelationships.Relationships)+2) // +2因为rId1保留给styles
 
 	// 序列化页脚
 	footerXML, err := xml.MarshalIndent(footer, "", "  ")
