@@ -1162,3 +1162,201 @@ func TestPageBreakAndDeletion(t *testing.T) {
 		t.Error("保存的文档文件不存在")
 	}
 }
+
+// TestAddFormattedHeader 测试添加格式化页眉
+func TestAddFormattedHeader(t *testing.T) {
+	doc := New()
+
+	// 测试添加格式化页眉
+	config := &HeaderFooterConfig{
+		Text: "公司报告",
+		Format: &TextFormat{
+			FontSize:   10,
+			FontColor:  "8e8e8e",
+			FontFamily: "Arial",
+		},
+		Alignment: AlignCenter,
+	}
+
+	err := doc.AddFormattedHeader(HeaderFooterTypeDefault, config)
+	if err != nil {
+		t.Fatalf("添加格式化页眉失败: %v", err)
+	}
+
+	// 验证页眉文件被创建
+	headerPartName := "word/header1.xml"
+	if _, ok := doc.parts[headerPartName]; !ok {
+		t.Errorf("页眉文件 %s 未创建", headerPartName)
+	}
+
+	// 保存并验证文档
+	filename := "test_formatted_header.docx"
+	defer os.Remove(filename)
+
+	err = doc.Save(filename)
+	if err != nil {
+		t.Fatalf("保存文档失败: %v", err)
+	}
+
+	// 验证文件存在
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		t.Error("保存的文档文件不存在")
+	}
+}
+
+// TestAddFormattedFooter 测试添加格式化页脚
+func TestAddFormattedFooter(t *testing.T) {
+	doc := New()
+
+	// 测试添加格式化页脚
+	config := &HeaderFooterConfig{
+		Text: "第 1 页",
+		Format: &TextFormat{
+			FontSize:   9,
+			FontColor:  "666666",
+			FontFamily: "宋体",
+			Bold:       true,
+		},
+		Alignment: AlignCenter,
+	}
+
+	err := doc.AddFormattedFooter(HeaderFooterTypeDefault, config)
+	if err != nil {
+		t.Fatalf("添加格式化页脚失败: %v", err)
+	}
+
+	// 验证页脚文件被创建
+	footerPartName := "word/footer1.xml"
+	if _, ok := doc.parts[footerPartName]; !ok {
+		t.Errorf("页脚文件 %s 未创建", footerPartName)
+	}
+
+	// 保存并验证文档
+	filename := "test_formatted_footer.docx"
+	defer os.Remove(filename)
+
+	err = doc.Save(filename)
+	if err != nil {
+		t.Fatalf("保存文档失败: %v", err)
+	}
+
+	// 验证文件存在
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		t.Error("保存的文档文件不存在")
+	}
+}
+
+// TestAddFormattedHeaderWithNilConfig 测试使用空配置添加页眉
+func TestAddFormattedHeaderWithNilConfig(t *testing.T) {
+	doc := New()
+
+	// 测试使用nil配置添加页眉
+	err := doc.AddFormattedHeader(HeaderFooterTypeDefault, nil)
+	if err != nil {
+		t.Fatalf("使用nil配置添加页眉失败: %v", err)
+	}
+
+	// 验证页眉文件被创建
+	headerPartName := "word/header1.xml"
+	if _, ok := doc.parts[headerPartName]; !ok {
+		t.Errorf("页眉文件 %s 未创建", headerPartName)
+	}
+}
+
+// TestAddFormattedHeaderWithAllFormats 测试所有格式选项
+func TestAddFormattedHeaderWithAllFormats(t *testing.T) {
+	doc := New()
+
+	// 测试所有格式选项
+	config := &HeaderFooterConfig{
+		Text: "格式化测试",
+		Format: &TextFormat{
+			Bold:       true,
+			Italic:     true,
+			FontSize:   12,
+			FontColor:  "FF0000",
+			FontFamily: "Times New Roman",
+			Underline:  true,
+			Strike:     true,
+			Highlight:  "yellow",
+		},
+		Alignment: AlignRight,
+	}
+
+	err := doc.AddFormattedHeader(HeaderFooterTypeDefault, config)
+	if err != nil {
+		t.Fatalf("添加格式化页眉失败: %v", err)
+	}
+
+	// 保存并验证文档
+	filename := "test_all_formats_header.docx"
+	defer os.Remove(filename)
+
+	err = doc.Save(filename)
+	if err != nil {
+		t.Fatalf("保存文档失败: %v", err)
+	}
+}
+
+// TestCreateFormattedParagraph 测试createFormattedParagraph函数
+func TestCreateFormattedParagraph(t *testing.T) {
+	// 测试基本段落创建
+	para := createFormattedParagraph("测试文本", nil, "")
+	if len(para.Runs) != 1 {
+		t.Errorf("期望1个Run，实际得到%d个", len(para.Runs))
+	}
+	if para.Runs[0].Text.Content != "测试文本" {
+		t.Errorf("期望文本'测试文本'，实际得到'%s'", para.Runs[0].Text.Content)
+	}
+
+	// 测试带对齐方式的段落
+	para2 := createFormattedParagraph("居中文本", nil, AlignCenter)
+	if para2.Properties == nil {
+		t.Fatal("段落属性不应为nil")
+	}
+	if para2.Properties.Justification == nil {
+		t.Fatal("对齐方式属性不应为nil")
+	}
+	if para2.Properties.Justification.Val != string(AlignCenter) {
+		t.Errorf("期望对齐方式'center'，实际得到'%s'", para2.Properties.Justification.Val)
+	}
+
+	// 测试带格式的段落
+	format := &TextFormat{
+		Bold:       true,
+		FontSize:   14,
+		FontColor:  "0000FF",
+		FontFamily: "Arial",
+	}
+	para3 := createFormattedParagraph("格式化文本", format, AlignLeft)
+	if para3.Runs[0].Properties == nil {
+		t.Fatal("Run属性不应为nil")
+	}
+	if para3.Runs[0].Properties.Bold == nil {
+		t.Error("粗体属性不应为nil")
+	}
+	if para3.Runs[0].Properties.FontSize == nil {
+		t.Error("字体大小属性不应为nil")
+	}
+	if para3.Runs[0].Properties.FontSize.Val != "28" { // 14 * 2 = 28
+		t.Errorf("期望字体大小'28'，实际得到'%s'", para3.Runs[0].Properties.FontSize.Val)
+	}
+	if para3.Runs[0].Properties.Color == nil {
+		t.Error("颜色属性不应为nil")
+	}
+	if para3.Runs[0].Properties.Color.Val != "0000FF" {
+		t.Errorf("期望颜色'0000FF'，实际得到'%s'", para3.Runs[0].Properties.Color.Val)
+	}
+	if para3.Runs[0].Properties.FontFamily == nil {
+		t.Error("字体属性不应为nil")
+	}
+	if para3.Runs[0].Properties.FontFamily.ASCII != "Arial" {
+		t.Errorf("期望字体'Arial'，实际得到'%s'", para3.Runs[0].Properties.FontFamily.ASCII)
+	}
+
+	// 测试空文本
+	para4 := createFormattedParagraph("", nil, AlignCenter)
+	if len(para4.Runs) != 0 {
+		t.Errorf("空文本应该不添加Run，实际得到%d个", len(para4.Runs))
+	}
+}

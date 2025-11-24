@@ -452,6 +452,228 @@ func (d *Document) AddFooterWithPageNumber(footerType HeaderFooterType, text str
 	return nil
 }
 
+// HeaderFooterConfig 页眉页脚配置
+type HeaderFooterConfig struct {
+	Text      string        // 文本内容
+	Format    *TextFormat   // 文本格式配置
+	Alignment AlignmentType // 对齐方式
+}
+
+// createFormattedParagraph 创建格式化的段落
+func createFormattedParagraph(text string, format *TextFormat, alignment AlignmentType) *Paragraph {
+	paragraph := &Paragraph{}
+
+	// 设置段落对齐方式
+	if alignment != "" {
+		paragraph.Properties = &ParagraphProperties{
+			Justification: &Justification{Val: string(alignment)},
+		}
+	}
+
+	// 如果有文本内容，创建带格式的Run
+	if text != "" {
+		run := Run{
+			Text: Text{
+				Content: text,
+				Space:   "preserve",
+			},
+		}
+
+		// 应用文本格式
+		if format != nil {
+			runProps := &RunProperties{}
+
+			// 设置字体
+			fontName := ""
+			if format.FontFamily != "" {
+				fontName = format.FontFamily
+			} else if format.FontName != "" {
+				fontName = format.FontName
+			}
+			if fontName != "" {
+				runProps.FontFamily = &FontFamily{
+					ASCII:    fontName,
+					HAnsi:    fontName,
+					EastAsia: fontName,
+					CS:       fontName,
+				}
+			}
+
+			// 设置粗体
+			if format.Bold {
+				runProps.Bold = &Bold{}
+			}
+
+			// 设置斜体
+			if format.Italic {
+				runProps.Italic = &Italic{}
+			}
+
+			// 设置字体颜色
+			if format.FontColor != "" {
+				runProps.Color = &Color{Val: format.FontColor}
+			}
+
+			// 设置字体大小
+			if format.FontSize > 0 {
+				// Word中字体大小是半磅为单位，所以需要乘以2
+				runProps.FontSize = &FontSize{Val: fmt.Sprintf("%d", format.FontSize*2)}
+			}
+
+			// 设置下划线
+			if format.Underline {
+				runProps.Underline = &Underline{Val: "single"}
+			}
+
+			// 设置删除线
+			if format.Strike {
+				runProps.Strike = &Strike{}
+			}
+
+			// 设置高亮
+			if format.Highlight != "" {
+				runProps.Highlight = &Highlight{Val: format.Highlight}
+			}
+
+			run.Properties = runProps
+		}
+
+		paragraph.Runs = append(paragraph.Runs, run)
+	}
+
+	return paragraph
+}
+
+// AddFormattedHeader 添加格式化页眉
+//
+// 该方法允许添加带有自定义文本格式和对齐方式的页眉。
+//
+// 参数:
+//   - headerType: 页眉类型 (HeaderFooterTypeDefault, HeaderFooterTypeFirst, HeaderFooterTypeEven)
+//   - config: 页眉配置，包含文本内容、格式和对齐方式
+//
+// 示例:
+//
+//	doc.AddFormattedHeader(document.HeaderFooterTypeDefault, &document.HeaderFooterConfig{
+//		Text: "公司报告",
+//		Format: &document.TextFormat{
+//			FontSize:   10,
+//			FontColor:  "8e8e8e",
+//			FontFamily: "Arial",
+//		},
+//		Alignment: document.AlignCenter,
+//	})
+func (d *Document) AddFormattedHeader(headerType HeaderFooterType, config *HeaderFooterConfig) error {
+	header := createStandardHeader()
+
+	// 创建格式化页眉段落
+	if config == nil {
+		config = &HeaderFooterConfig{}
+	}
+	paragraph := createFormattedParagraph(config.Text, config.Format, config.Alignment)
+	header.Paragraphs = append(header.Paragraphs, paragraph)
+
+	// 生成关系ID
+	headerID := fmt.Sprintf("rId%d", len(d.documentRelationships.Relationships)+2)
+
+	// 序列化页眉
+	headerXML, err := xml.MarshalIndent(header, "", "  ")
+	if err != nil {
+		return fmt.Errorf("序列化页眉失败: %v", err)
+	}
+
+	// 添加XML声明
+	fullXML := append([]byte(xml.Header), headerXML...)
+
+	// 获取文件名
+	fileName := getFileNameForType("header", headerType)
+	headerPartName := fmt.Sprintf("word/%s", fileName)
+
+	// 存储页眉内容
+	d.parts[headerPartName] = fullXML
+
+	// 添加关系到文档关系
+	relationship := Relationship{
+		ID:     headerID,
+		Type:   "http://schemas.openxmlformats.org/officeDocument/2006/relationships/header",
+		Target: fileName,
+	}
+	d.documentRelationships.Relationships = append(d.documentRelationships.Relationships, relationship)
+
+	// 添加内容类型
+	d.addContentType(headerPartName, "application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml")
+
+	// 更新节属性
+	d.addHeaderReference(headerType, headerID)
+
+	return nil
+}
+
+// AddFormattedFooter 添加格式化页脚
+//
+// 该方法允许添加带有自定义文本格式和对齐方式的页脚。
+//
+// 参数:
+//   - footerType: 页脚类型 (HeaderFooterTypeDefault, HeaderFooterTypeFirst, HeaderFooterTypeEven)
+//   - config: 页脚配置，包含文本内容、格式和对齐方式
+//
+// 示例:
+//
+//	doc.AddFormattedFooter(document.HeaderFooterTypeDefault, &document.HeaderFooterConfig{
+//		Text: "第 1 页",
+//		Format: &document.TextFormat{
+//			FontSize:   9,
+//			FontColor:  "666666",
+//			FontFamily: "宋体",
+//		},
+//		Alignment: document.AlignCenter,
+//	})
+func (d *Document) AddFormattedFooter(footerType HeaderFooterType, config *HeaderFooterConfig) error {
+	footer := createStandardFooter()
+
+	// 创建格式化页脚段落
+	if config == nil {
+		config = &HeaderFooterConfig{}
+	}
+	paragraph := createFormattedParagraph(config.Text, config.Format, config.Alignment)
+	footer.Paragraphs = append(footer.Paragraphs, paragraph)
+
+	// 生成关系ID
+	footerID := fmt.Sprintf("rId%d", len(d.documentRelationships.Relationships)+2)
+
+	// 序列化页脚
+	footerXML, err := xml.MarshalIndent(footer, "", "  ")
+	if err != nil {
+		return fmt.Errorf("序列化页脚失败: %v", err)
+	}
+
+	// 添加XML声明
+	fullXML := append([]byte(xml.Header), footerXML...)
+
+	// 获取文件名
+	fileName := getFileNameForType("footer", footerType)
+	footerPartName := fmt.Sprintf("word/%s", fileName)
+
+	// 存储页脚内容
+	d.parts[footerPartName] = fullXML
+
+	// 添加关系到文档关系
+	relationship := Relationship{
+		ID:     footerID,
+		Type:   "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer",
+		Target: fileName,
+	}
+	d.documentRelationships.Relationships = append(d.documentRelationships.Relationships, relationship)
+
+	// 添加内容类型
+	d.addContentType(footerPartName, "application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml")
+
+	// 更新节属性
+	d.addFooterReference(footerType, footerID)
+
+	return nil
+}
+
 // SetDifferentFirstPage 设置首页不同
 func (d *Document) SetDifferentFirstPage(different bool) {
 	sectPr := d.getSectionPropertiesForHeaderFooter()
