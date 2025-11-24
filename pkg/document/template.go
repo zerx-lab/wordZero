@@ -787,7 +787,47 @@ func (te *TemplateEngine) extractTemplateContentFromDocument(doc *Document) (str
 		}
 	}
 
+	// 提取页眉页脚中的模板内容
+	te.extractHeaderFooterContent(doc, &contentBuilder)
+
 	return contentBuilder.String(), nil
+}
+
+// extractHeaderFooterContent 从页眉页脚中提取模板内容
+func (te *TemplateEngine) extractHeaderFooterContent(doc *Document, contentBuilder *strings.Builder) {
+	if doc.parts == nil {
+		return
+	}
+
+	// 遍历所有部件，查找页眉页脚文件
+	for partName, partData := range doc.parts {
+		if strings.HasPrefix(partName, "word/header") || strings.HasPrefix(partName, "word/footer") {
+			// 解析页眉/页脚XML并提取文本
+			text := te.extractTextFromHeaderFooterXML(partData)
+			if text != "" {
+				contentBuilder.WriteString(text)
+				contentBuilder.WriteString("\n")
+			}
+		}
+	}
+}
+
+// extractTextFromHeaderFooterXML 从页眉/页脚XML中提取文本内容
+func (te *TemplateEngine) extractTextFromHeaderFooterXML(xmlData []byte) string {
+	var contentBuilder strings.Builder
+
+	// 使用正则表达式提取<w:t>标签中的文本内容
+	// 这是一个简化的解析方法，适用于提取模板变量
+	textPattern := regexp.MustCompile(`<w:t[^>]*>([^<]*)</w:t>`)
+	matches := textPattern.FindAllSubmatch(xmlData, -1)
+
+	for _, match := range matches {
+		if len(match) >= 2 {
+			contentBuilder.Write(match[1])
+		}
+	}
+
+	return contentBuilder.String()
 }
 
 // cloneDocument 深度复制文档所有元素和属性
@@ -827,7 +867,50 @@ func (te *TemplateEngine) cloneDocument(source *Document) *Document {
 		doc.parts["word/styles.xml"] = data
 	}
 
+	// 复制页眉页脚部件
+	te.cloneHeaderFooterParts(source, doc)
+
+	// 复制文档关系（包含页眉页脚引用）
+	if source.documentRelationships != nil {
+		doc.documentRelationships = &Relationships{
+			Xmlns:         source.documentRelationships.Xmlns,
+			Relationships: make([]Relationship, len(source.documentRelationships.Relationships)),
+		}
+		copy(doc.documentRelationships.Relationships, source.documentRelationships.Relationships)
+	}
+
+	// 复制内容类型
+	if source.contentTypes != nil {
+		doc.contentTypes = &ContentTypes{
+			Xmlns:     source.contentTypes.Xmlns,
+			Defaults:  make([]Default, len(source.contentTypes.Defaults)),
+			Overrides: make([]Override, len(source.contentTypes.Overrides)),
+		}
+		copy(doc.contentTypes.Defaults, source.contentTypes.Defaults)
+		copy(doc.contentTypes.Overrides, source.contentTypes.Overrides)
+	}
+
 	return doc
+}
+
+// cloneHeaderFooterParts 复制页眉页脚部件
+func (te *TemplateEngine) cloneHeaderFooterParts(source, dest *Document) {
+	if source.parts == nil {
+		return
+	}
+
+	for partName, partData := range source.parts {
+		// 复制页眉文件
+		if strings.HasPrefix(partName, "word/header") {
+			dest.parts[partName] = make([]byte, len(partData))
+			copy(dest.parts[partName], partData)
+		}
+		// 复制页脚文件
+		if strings.HasPrefix(partName, "word/footer") {
+			dest.parts[partName] = make([]byte, len(partData))
+			copy(dest.parts[partName], partData)
+		}
+	}
 }
 
 // cloneParagraph 深度复制段落
@@ -1631,6 +1714,12 @@ func (te *TemplateEngine) replaceVariablesInDocument(doc *Document, data *Templa
 		}
 	}
 
+	// 处理页眉页脚中的变量替换
+	err = te.replaceVariablesInHeadersFooters(doc, data)
+	if err != nil {
+		return err
+	}
+
 	// 处理图片占位符
 	err = te.processImagePlaceholders(doc, data)
 	if err != nil {
@@ -1638,6 +1727,65 @@ func (te *TemplateEngine) replaceVariablesInDocument(doc *Document, data *Templa
 	}
 
 	return nil
+}
+
+// replaceVariablesInHeadersFooters 在页眉页脚中替换变量
+func (te *TemplateEngine) replaceVariablesInHeadersFooters(doc *Document, data *TemplateData) error {
+	if doc.parts == nil {
+		return nil
+	}
+
+	for partName, partData := range doc.parts {
+		// 处理页眉文件
+		if strings.HasPrefix(partName, "word/header") && strings.HasSuffix(partName, ".xml") {
+			newData, err := te.replaceVariablesInXMLPart(partData, data)
+			if err != nil {
+				return fmt.Errorf("处理页眉变量替换失败 %s: %v", partName, err)
+			}
+			doc.parts[partName] = newData
+		}
+		// 处理页脚文件
+		if strings.HasPrefix(partName, "word/footer") && strings.HasSuffix(partName, ".xml") {
+			newData, err := te.replaceVariablesInXMLPart(partData, data)
+			if err != nil {
+				return fmt.Errorf("处理页脚变量替换失败 %s: %v", partName, err)
+			}
+			doc.parts[partName] = newData
+		}
+	}
+
+	return nil
+}
+
+// replaceVariablesInXMLPart 在XML部件中替换变量
+func (te *TemplateEngine) replaceVariablesInXMLPart(xmlData []byte, data *TemplateData) ([]byte, error) {
+	content := string(xmlData)
+
+	// 替换变量: {{变量名}}
+	varPattern := regexp.MustCompile(`\{\{(\w+)\}\}`)
+	content = varPattern.ReplaceAllStringFunc(content, func(match string) string {
+		varName := varPattern.FindStringSubmatch(match)[1]
+		if value, exists := data.Variables[varName]; exists {
+			// 对XML内容进行转义
+			return te.escapeXMLContent(te.interfaceToString(value))
+		}
+		return match // 保持原样
+	})
+
+	// 替换条件语句
+	content = te.renderConditionals(content, data.Conditions)
+
+	return []byte(content), nil
+}
+
+// escapeXMLContent 转义XML特殊字符
+func (te *TemplateEngine) escapeXMLContent(s string) string {
+	s = strings.ReplaceAll(s, "&", "&amp;")
+	s = strings.ReplaceAll(s, "<", "&lt;")
+	s = strings.ReplaceAll(s, ">", "&gt;")
+	s = strings.ReplaceAll(s, "\"", "&quot;")
+	s = strings.ReplaceAll(s, "'", "&apos;")
+	return s
 }
 
 // processDocumentLevelLoops 处理文档级别的循环（跨段落）

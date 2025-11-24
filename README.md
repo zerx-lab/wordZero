@@ -32,6 +32,7 @@ WordZero is a Golang-based Word document manipulation library that provides basi
 - 📄 **Page Settings**: Page size, margins, headers/footers, and professional layout features
 - 🔧 **Advanced Features**: Table of contents generation, footnotes/endnotes, list numbering, template engine, etc.
 - 🎯 **Template Inheritance**: Support for base templates and block override mechanisms for template reuse and extension
+- 📝 **Header/Footer Templates**: Support for template variables in headers and footers for dynamic content replacement
 - ⚡ **Excellent Performance**: Zero-dependency pure Go implementation, average 2.62ms processing speed, 3.7x faster than JavaScript, 21x faster than Python
 - 🔧 **Easy to Use**: Clean API design with fluent interface support
 

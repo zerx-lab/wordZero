@@ -3,6 +3,7 @@ package document
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // TemplateRenderer 专门负责模板渲染的引擎
@@ -164,6 +165,41 @@ func (tr *TemplateRenderer) analyzeDocument(doc *Document, analysis *TemplateAna
 			analysis.Tables = append(analysis.Tables, tableAnalysis)
 		}
 	}
+
+	// 分析页眉页脚中的模板变量
+	tr.analyzeHeadersFooters(doc, analysis)
+}
+
+// analyzeHeadersFooters 分析页眉页脚中的模板变量
+func (tr *TemplateRenderer) analyzeHeadersFooters(doc *Document, analysis *TemplateAnalysis) {
+	if doc == nil || doc.parts == nil {
+		return
+	}
+
+	// 遍历所有部件，查找页眉页脚文件
+	for partName, partData := range doc.parts {
+		if strings.HasPrefix(partName, "word/header") || strings.HasPrefix(partName, "word/footer") {
+			// 解析页眉/页脚XML并提取模板变量
+			tr.analyzeHeaderFooterXML(partData, analysis)
+		}
+	}
+}
+
+// analyzeHeaderFooterXML 分析页眉/页脚XML中的模板变量
+func (tr *TemplateRenderer) analyzeHeaderFooterXML(xmlData []byte, analysis *TemplateAnalysis) {
+	// 使用正则表达式提取<w:t>标签中的文本内容
+	textPattern := regexp.MustCompile(`<w:t[^>]*>([^<]*)</w:t>`)
+	matches := textPattern.FindAllSubmatch(xmlData, -1)
+
+	var fullText strings.Builder
+	for _, match := range matches {
+		if len(match) >= 2 {
+			fullText.Write(match[1])
+		}
+	}
+
+	// 提取模板变量
+	tr.extractTemplateVariables(fullText.String(), analysis)
 }
 
 // analyzeParagraph 分析段落
