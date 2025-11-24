@@ -1429,10 +1429,16 @@ func (te *TemplateEngine) cloneTableCell(source *TableCell) TableCell {
 	newCell := TableCell{
 		Properties: te.cloneTableCellProperties(source.Properties),
 		Paragraphs: make([]Paragraph, len(source.Paragraphs)),
+		Tables:     make([]Table, len(source.Tables)), // 复制嵌套表格
 	}
 
 	for i, para := range source.Paragraphs {
 		newCell.Paragraphs[i] = *te.cloneParagraph(&para)
+	}
+
+	// 深度复制嵌套表格
+	for i, table := range source.Tables {
+		newCell.Tables[i] = *te.cloneTable(&table)
 	}
 
 	return newCell
@@ -2076,6 +2082,13 @@ func (te *TemplateEngine) replaceVariablesInTable(table *Table, data *TemplateDa
 					return err
 				}
 			}
+			// 递归处理嵌套表格
+			for k := range table.Rows[i].Cells[j].Tables {
+				err := te.replaceVariablesInTable(&table.Rows[i].Cells[j].Tables[k], data)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 
@@ -2266,6 +2279,21 @@ func (te *TemplateEngine) renderTableTemplate(table *Table, data *TemplateData) 
 						}
 
 						newRow.Cells[i].Paragraphs[j].Runs = []Run{newRun}
+					}
+				}
+
+				// 处理嵌套表格中的变量替换
+				for k := range newRow.Cells[i].Tables {
+					// 创建模板数据，用于嵌套表格的变量替换
+					nestedData := NewTemplateData()
+					nestedData.Variables = make(map[string]interface{})
+					for key, value := range itemMap {
+						nestedData.Variables[key] = value
+					}
+					// 递归处理嵌套表格
+					err := te.replaceVariablesInTable(&newRow.Cells[i].Tables[k], nestedData)
+					if err != nil {
+						Debugf("处理嵌套表格变量替换时出错: %v", err)
 					}
 				}
 			}

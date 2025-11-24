@@ -93,6 +93,41 @@ type TableCell struct {
 	XMLName    xml.Name             `xml:"w:tc"`
 	Properties *TableCellProperties `xml:"w:tcPr,omitempty"`
 	Paragraphs []Paragraph          `xml:"w:p"`
+	Tables     []Table              `xml:"w:tbl"` // 支持嵌套表格
+}
+
+// MarshalXML 自定义XML序列化，确保嵌套表格正确序列化
+// OOXML要求: 单元格内容应按照原始文档顺序输出段落和表格
+func (tc *TableCell) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	// 开始元素 <w:tc>
+	start.Name = xml.Name{Local: "w:tc"}
+	if err := e.EncodeToken(start); err != nil {
+		return err
+	}
+
+	// 序列化属性 <w:tcPr>
+	if tc.Properties != nil {
+		if err := e.Encode(tc.Properties); err != nil {
+			return err
+		}
+	}
+
+	// 序列化段落 <w:p>
+	for i := range tc.Paragraphs {
+		if err := e.Encode(&tc.Paragraphs[i]); err != nil {
+			return err
+		}
+	}
+
+	// 序列化嵌套表格 <w:tbl>
+	for i := range tc.Tables {
+		if err := e.Encode(&tc.Tables[i]); err != nil {
+			return err
+		}
+	}
+
+	// 结束元素 </w:tc>
+	return e.EncodeToken(start.End())
 }
 
 // TableCellProperties 表格单元格属性
