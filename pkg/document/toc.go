@@ -127,12 +127,8 @@ func (d *Document) UpdateTOC() error {
 	}
 
 	// 处理SDT类型的TOC
-	// 从TOC配置中获取MaxLevel，默认为3
+	// 使用默认TOC配置
 	config := DefaultTOCConfig()
-	if tocSDT.Properties != nil && tocSDT.Properties.DocPartObj != nil {
-		// 可以从SDT属性中提取配置，这里使用默认配置
-		config = DefaultTOCConfig()
-	}
 
 	// 重新收集标题信息
 	entries := d.collectHeadings(config.MaxLevel)
@@ -490,15 +486,22 @@ func (d *Document) findTOCStart() int {
 // findTOCSDT 查找目录SDT结构
 func (d *Document) findTOCSDT() (*SDT, int) {
 	for i, element := range d.Body.Elements {
-		if sdt, ok := element.(*SDT); ok {
-			// 检查是否是目录SDT
-			if sdt.Properties != nil && sdt.Properties.DocPartObj != nil {
-				if sdt.Properties.DocPartObj.DocPartGallery != nil {
-					if sdt.Properties.DocPartObj.DocPartGallery.Val == "Table of Contents" {
-						return sdt, i
-					}
-				}
-			}
+		sdt, ok := element.(*SDT)
+		if !ok {
+			continue
+		}
+
+		// 检查是否是目录SDT
+		if sdt.Properties == nil || sdt.Properties.DocPartObj == nil {
+			continue
+		}
+
+		if sdt.Properties.DocPartObj.DocPartGallery == nil {
+			continue
+		}
+
+		if sdt.Properties.DocPartObj.DocPartGallery.Val == "Table of Contents" {
+			return sdt, i
 		}
 	}
 	return nil, -1

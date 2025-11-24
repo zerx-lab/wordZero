@@ -44,7 +44,10 @@ func TestTOCUpdate(t *testing.T) {
 
 	// 保存文档用于检查
 	outputDir := filepath.Join("test", "output")
-	os.MkdirAll(outputDir, 0755)
+	err = os.MkdirAll(outputDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create output directory: %v", err)
+	}
 	outputPath := filepath.Join(outputDir, "toc_update_test.docx")
 
 	err = doc.Save(outputPath)
