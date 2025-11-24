@@ -33,6 +33,9 @@ var (
 	ErrInvalidBlockDefinition = NewDocumentError("invalid_block_definition", fmt.Errorf("invalid block definition"), "")
 )
 
+// 预编译正则表达式用于页眉页脚变量替换
+var headerFooterVarPattern = regexp.MustCompile(`\{\{(\w+)\}\}`)
+
 // TemplateEngine 模板引擎
 type TemplateEngine struct {
 	cache    map[string]*Template // 模板缓存
@@ -1761,10 +1764,13 @@ func (te *TemplateEngine) replaceVariablesInHeadersFooters(doc *Document, data *
 func (te *TemplateEngine) replaceVariablesInXMLPart(xmlData []byte, data *TemplateData) ([]byte, error) {
 	content := string(xmlData)
 
-	// 替换变量: {{变量名}}
-	varPattern := regexp.MustCompile(`\{\{(\w+)\}\}`)
-	content = varPattern.ReplaceAllStringFunc(content, func(match string) string {
-		varName := varPattern.FindStringSubmatch(match)[1]
+	// 替换变量: {{变量名}} - 使用预编译的正则表达式
+	content = headerFooterVarPattern.ReplaceAllStringFunc(content, func(match string) string {
+		matches := headerFooterVarPattern.FindStringSubmatch(match)
+		if len(matches) < 2 {
+			return match
+		}
+		varName := matches[1]
 		if value, exists := data.Variables[varName]; exists {
 			// 对XML内容进行转义
 			return te.escapeXMLContent(te.interfaceToString(value))

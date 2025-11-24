@@ -2,6 +2,7 @@
 package document
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -907,14 +908,8 @@ func TestHeaderFooterTemplateVariables(t *testing.T) {
 		}
 	}
 
-	// 使用TemplateRenderer分析模板
-	renderer := NewTemplateRenderer()
-	renderer.SetLogging(false) // 关闭日志输出
-
-	// 加载模板
-	_, err = renderer.LoadTemplateFromFile("header_footer_analyze", "")
-	// 由于文件不存在，我们直接用engine加载的模板测试分析功能
-	// 重新创建一个带页眉页脚的文档用于测试分析
+	// 测试使用TemplateRenderer分析包含页眉页脚的模板
+	// 创建一个新的带页眉页脚的文档用于测试分析功能
 	doc2 := New()
 	doc2.AddParagraph("{{mainContent}}")
 	err = doc2.AddHeader(HeaderFooterTypeDefault, "{{documentTitle}}")
@@ -930,13 +925,13 @@ func TestHeaderFooterTemplateVariables(t *testing.T) {
 	}
 
 	// 创建renderer并使用已加载的模板
-	renderer2 := &TemplateRenderer{
+	renderer := &TemplateRenderer{
 		engine: engine2,
 		logger: &TemplateLogger{enabled: false},
 	}
 
 	// 分析模板
-	analysis, err := renderer2.AnalyzeTemplate("analyze_test")
+	analysis, err := renderer.AnalyzeTemplate("analyze_test")
 	if err != nil {
 		t.Fatalf("分析模板失败: %v", err)
 	}
@@ -1000,14 +995,14 @@ func TestHeaderFooterVariableReplacement(t *testing.T) {
 		content := string(partData)
 
 		if partName == "word/header1.xml" {
-			if !containsString(content, "{{reportID}}") && containsString(content, "RPT-2024-001") {
+			if !strings.Contains(content, "{{reportID}}") && strings.Contains(content, "RPT-2024-001") {
 				headerReplaced = true
 			}
 			t.Logf("页眉内容: %s", content)
 		}
 
 		if partName == "word/footer1.xml" {
-			if !containsString(content, "{{author}}") && containsString(content, "测试作者") {
+			if !strings.Contains(content, "{{author}}") && strings.Contains(content, "测试作者") {
 				footerReplaced = true
 			}
 			t.Logf("页脚内容: %s", content)
@@ -1021,20 +1016,4 @@ func TestHeaderFooterVariableReplacement(t *testing.T) {
 	if !footerReplaced {
 		t.Error("页脚中的变量应该被替换")
 	}
-}
-
-// containsString 检查字符串是否包含子串
-func containsString(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
-		(len(s) > 0 && len(substr) > 0 && findSubstring(s, substr)))
-}
-
-// findSubstring 查找子串
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
