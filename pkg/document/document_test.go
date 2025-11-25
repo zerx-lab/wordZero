@@ -1693,9 +1693,11 @@ func TestParagraphFormattingIntegration(t *testing.T) {
 	}
 
 	// 保存文档验证
-	err := doc.Save("test_formatting_integration.docx")
+	filename := "test_formatting_integration.docx"
+	defer os.Remove(filename)
+
+	err := doc.Save(filename)
 	if err != nil {
 		t.Errorf("保存文档失败: %v", err)
 	}
-	os.Remove("test_formatting_integration.docx")
 }
