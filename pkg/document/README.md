@@ -549,6 +549,62 @@ para.SetParagraphFormat(&document.ParagraphFormatConfig{
 - [`SetCellShading(row, col int, config *ShadingConfig)`](table.go#L2121) - 设置单元格底纹
 - [`SetAlternatingRowColors(evenRowColor, oddRowColor string)`](table.go#L2142) - 设置交替行颜色
 
+### 单元格图片功能 ✨ **新功能**
+
+支持向表格单元格中添加图片：
+
+- [`AddCellImage(table *Table, row, col int, config *CellImageConfig)`](image.go#L1106) - 向单元格添加图片（完整配置）
+- [`AddCellImageFromFile(table *Table, row, col int, filePath string, widthMM float64)`](image.go#L1214) - 从文件向单元格添加图片
+- [`AddCellImageFromData(table *Table, row, col int, data []byte, widthMM float64)`](image.go#L1236) - 从二进制数据向单元格添加图片
+
+#### CellImageConfig - 单元格图片配置
+```go
+type CellImageConfig struct {
+    FilePath        string      // 图片文件路径
+    Data            []byte      // 图片二进制数据（与FilePath二选一）
+    Format          ImageFormat // 图片格式（当使用Data时需要指定）
+    Width           float64     // 图片宽度（毫米），0表示自动
+    Height          float64     // 图片高度（毫米），0表示自动
+    KeepAspectRatio bool        // 是否保持宽高比
+    AltText         string      // 图片替代文字
+    Title           string      // 图片标题
+}
+```
+
+#### 表格单元格图片使用示例
+```go
+// 创建表格
+table, err := doc.AddTable(&document.TableConfig{
+    Rows:  2,
+    Cols:  2,
+    Width: 8000,
+})
+
+// 方式1：从文件添加图片到单元格
+imageInfo, err := doc.AddCellImageFromFile(table, 0, 0, "logo.png", 30) // 30mm宽度
+
+// 方式2：从二进制数据添加图片
+imageData := []byte{...} // 图片二进制数据
+imageInfo, err := doc.AddCellImageFromData(table, 0, 1, imageData, 25) // 25mm宽度
+
+// 方式3：使用完整配置
+config := &document.CellImageConfig{
+    FilePath:        "product.jpg",
+    Width:           50,     // 50mm宽度
+    Height:          40,     // 40mm高度
+    KeepAspectRatio: false,  // 不保持宽高比
+    AltText:         "产品图片",
+    Title:           "产品展示",
+}
+imageInfo, err := doc.AddCellImage(table, 1, 0, config)
+```
+
+**注意事项**：
+- 图片通过 `Document` 对象的方法添加，因为图片资源需要在文档级别管理
+- 支持 PNG、JPEG、GIF 格式的图片
+- 宽度/高度单位为毫米，设置为0时使用原始尺寸
+- 当设置 `KeepAspectRatio` 为 `true` 时，只需设置宽度或高度其中之一
+
 ### 单元格遍历迭代器 ✨ **新功能**
 
 提供强大的单元格遍历和查找功能：
