@@ -3,6 +3,9 @@ examples/output/
 */output/
 output/
 
+# 编译的示例二进制文件
+complex_table_demo
+
 # IDE和编辑器文件
 .cursor/
 .vscode/
