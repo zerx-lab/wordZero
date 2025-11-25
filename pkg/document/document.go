@@ -3816,10 +3816,13 @@ func (d *Document) parseAnchorDrawing(decoder *xml.Decoder, startElement xml.Sta
 func (d *Document) parseDrawingGraphic(decoder *xml.Decoder, startElement xml.StartElement) (*DrawingGraphic, error) {
 	graphic := &DrawingGraphic{}
 
-	// 解析属性
+	// 解析xmlns属性
 	for _, attr := range startElement.Attr {
-		if attr.Name.Local == "a" || attr.Name.Space == "http://schemas.openxmlformats.org/drawingml/2006/main" {
-			graphic.Xmlns = attr.Value
+		// 检查xmlns属性（命名空间声明）
+		if attr.Name.Space == "xmlns" || (attr.Name.Space == "" && strings.HasPrefix(attr.Name.Local, "xmlns")) {
+			if attr.Value == "http://schemas.openxmlformats.org/drawingml/2006/main" {
+				graphic.Xmlns = attr.Value
+			}
 		}
 	}
 
@@ -3894,10 +3897,13 @@ func (d *Document) parseGraphicData(decoder *xml.Decoder, startElement xml.Start
 func (d *Document) parsePicElement(decoder *xml.Decoder, startElement xml.StartElement) (*PicElement, error) {
 	pic := &PicElement{}
 
-	// 解析属性
+	// 解析xmlns属性
 	for _, attr := range startElement.Attr {
-		if attr.Name.Local == "pic" || attr.Name.Space == "http://schemas.openxmlformats.org/drawingml/2006/picture" {
-			pic.Xmlns = attr.Value
+		// 检查xmlns属性（命名空间声明）
+		if attr.Name.Space == "xmlns" || (attr.Name.Space == "" && strings.HasPrefix(attr.Name.Local, "xmlns")) {
+			if attr.Value == "http://schemas.openxmlformats.org/drawingml/2006/picture" {
+				pic.Xmlns = attr.Value
+			}
 		}
 	}
 

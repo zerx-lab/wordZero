@@ -3,6 +3,7 @@ package document
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -169,10 +170,10 @@ func TestTemplateImagePreservation(t *testing.T) {
 		if para, ok := elem.(*Paragraph); ok {
 			for _, run := range para.Runs {
 				if run.Text.Content != "" {
-					if containsSubstring(run.Text.Content, "测试报告") {
+					if strings.Contains(run.Text.Content, "测试报告") {
 						foundTitle = true
 					}
-					if containsSubstring(run.Text.Content, "张三") {
+					if strings.Contains(run.Text.Content, "张三") {
 						foundAuthor = true
 					}
 				}
@@ -188,19 +189,4 @@ func TestTemplateImagePreservation(t *testing.T) {
 	}
 
 	t.Log("TestTemplateImagePreservation 测试完成")
-}
-
-// containsSubstring 检查字符串中是否包含子字符串
-func containsSubstring(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
-		(len(s) > 0 && containsSubstringHelper(s, substr)))
-}
-
-func containsSubstringHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
