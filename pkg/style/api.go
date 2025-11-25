@@ -158,7 +158,7 @@ type QuickStyleConfig struct {
 // QuickParagraphConfig 快速段落配置
 type QuickParagraphConfig struct {
 	Alignment       string  `json:"alignment,omitempty"`       // left, center, right, justify
-	LineSpacing     float64 `json:"lineSpacing,omitempty"`     // 行间距倍数（如1.5表示1.5倍行距，240单位对应单倍行距）
+	LineSpacing     float64 `json:"lineSpacing,omitempty"`     // 行间距倍数：1.0=单倍行距，1.5=1.5倍行距，2.0=双倍行距（内部转换为OOXML单位：值×240）
 	SpaceBefore     int     `json:"spaceBefore,omitempty"`     // 段前间距（磅）
 	SpaceAfter      int     `json:"spaceAfter,omitempty"`      // 段后间距（磅）
 	FirstLineIndent int     `json:"firstLineIndent,omitempty"` // 首行缩进（磅）
