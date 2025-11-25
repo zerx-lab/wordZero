@@ -1224,3 +1224,111 @@ func TestTemplateSectionPropertiesPreservation(t *testing.T) {
 
 	t.Log("节属性保留测试通过")
 }
+
+// TestTemplateNumberingPropertiesPreservation 测试模板渲染时编号属性的保留
+func TestTemplateNumberingPropertiesPreservation(t *testing.T) {
+	// 创建包含编号段落的文档
+	doc := New()
+
+	// 添加带有编号的列表项
+	config := &ListConfig{
+		Type:         ListTypeNumber,
+		IndentLevel:  0,
+		StartNumber:  1,
+	}
+	doc.AddListItem("第一条 {{itemTitle}}", config)
+	doc.AddListItem("第二条 {{itemContent}}", config)
+
+	// 保存原文档
+	originalPath := "test_numbering_preservation_original.docx"
+	err := doc.Save(originalPath)
+	if err != nil {
+		t.Fatalf("保存原文档失败: %v", err)
+	}
+	defer func() {
+		if err := os.Remove(originalPath); err != nil {
+			t.Logf("清理原文档失败: %v", err)
+		}
+	}()
+
+	// 打开原文档作为模板
+	templateDoc, err := Open(originalPath)
+	if err != nil {
+		t.Fatalf("打开模板文档失败: %v", err)
+	}
+
+	// 验证原文档的编号属性被正确解析
+	paragraphs := templateDoc.Body.GetParagraphs()
+	if len(paragraphs) < 2 {
+		t.Fatalf("期望至少2个段落，实际 %d 个", len(paragraphs))
+	}
+
+	// 检查第一个段落的编号属性
+	if paragraphs[0].Properties == nil || paragraphs[0].Properties.NumberingProperties == nil {
+		t.Error("第一个段落的编号属性应该被解析")
+	}
+
+	// 创建模板引擎并加载模板
+	engine := NewTemplateEngine()
+	_, err = engine.LoadTemplateFromDocument("numbering_test", templateDoc)
+	if err != nil {
+		t.Fatalf("加载模板失败: %v", err)
+	}
+
+	// 渲染模板
+	data := NewTemplateData()
+	data.SetVariable("itemTitle", "合作项目情况")
+	data.SetVariable("itemContent", "合作项目背景")
+
+	renderedDoc, err := engine.RenderTemplateToDocument("numbering_test", data)
+	if err != nil {
+		t.Fatalf("渲染模板失败: %v", err)
+	}
+
+	// 保存渲染后的文档
+	renderedPath := "test_numbering_preservation_rendered.docx"
+	err = renderedDoc.Save(renderedPath)
+	if err != nil {
+		t.Fatalf("保存渲染后的文档失败: %v", err)
+	}
+	defer func() {
+		if err := os.Remove(renderedPath); err != nil {
+			t.Logf("清理渲染文档失败: %v", err)
+		}
+	}()
+
+	// 验证渲染后文档的编号属性被保留
+	renderedParagraphs := renderedDoc.Body.GetParagraphs()
+	if len(renderedParagraphs) < 2 {
+		t.Fatalf("渲染后期望至少2个段落，实际 %d 个", len(renderedParagraphs))
+	}
+
+	// 检查渲染后段落的编号属性是否被保留
+	for i, para := range renderedParagraphs[:2] {
+		if para.Properties == nil {
+			t.Errorf("段落 %d 的属性不应为空", i+1)
+			continue
+		}
+		if para.Properties.NumberingProperties == nil {
+			t.Errorf("段落 %d 的编号属性不应为空", i+1)
+			continue
+		}
+		if para.Properties.NumberingProperties.NumID == nil {
+			t.Errorf("段落 %d 的编号ID不应为空", i+1)
+		}
+		if para.Properties.NumberingProperties.ILevel == nil {
+			t.Errorf("段落 %d 的编号级别不应为空", i+1)
+		}
+	}
+
+	// 验证变量已被替换
+	firstParaText := ""
+	for _, run := range renderedParagraphs[0].Runs {
+		firstParaText += run.Text.Content
+	}
+	if !strings.Contains(firstParaText, "合作项目情况") {
+		t.Errorf("第一个段落应该包含替换后的变量值，实际内容: %s", firstParaText)
+	}
+
+	t.Log("编号属性保留测试通过")
+}

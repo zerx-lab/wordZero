@@ -2201,6 +2201,13 @@ func (d *Document) parseParagraphProperties(decoder *xml.Decoder, paragraph *Par
 				if err := d.skipElement(decoder, t.Name.Local); err != nil {
 					return err
 				}
+			case "numPr":
+				// 编号属性
+				numPr, err := d.parseNumberingProperties(decoder)
+				if err != nil {
+					return err
+				}
+				paragraph.Properties.NumberingProperties = numPr
 			default:
 				if err := d.skipElement(decoder, t.Name.Local); err != nil {
 					return err
@@ -2209,6 +2216,50 @@ func (d *Document) parseParagraphProperties(decoder *xml.Decoder, paragraph *Par
 		case xml.EndElement:
 			if t.Name.Local == "pPr" {
 				return nil
+			}
+		}
+	}
+}
+
+// parseNumberingProperties 解析编号属性
+func (d *Document) parseNumberingProperties(decoder *xml.Decoder) (*NumberingProperties, error) {
+	numPr := &NumberingProperties{}
+
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			return nil, WrapError("parse_numbering_properties", err)
+		}
+
+		switch t := token.(type) {
+		case xml.StartElement:
+			switch t.Name.Local {
+			case "ilvl":
+				// 编号级别
+				val := getAttributeValue(t.Attr, "val")
+				if val != "" {
+					numPr.ILevel = &ILevel{Val: val}
+				}
+				if err := d.skipElement(decoder, t.Name.Local); err != nil {
+					return nil, err
+				}
+			case "numId":
+				// 编号ID
+				val := getAttributeValue(t.Attr, "val")
+				if val != "" {
+					numPr.NumID = &NumID{Val: val}
+				}
+				if err := d.skipElement(decoder, t.Name.Local); err != nil {
+					return nil, err
+				}
+			default:
+				if err := d.skipElement(decoder, t.Name.Local); err != nil {
+					return nil, err
+				}
+			}
+		case xml.EndElement:
+			if t.Name.Local == "numPr" {
+				return numPr, nil
 			}
 		}
 	}
