@@ -2643,3 +2643,426 @@ func (t *Table) FindCellsByText(searchText string, exactMatch bool) ([]*CellInfo
 		return strings.Contains(text, searchText)
 	})
 }
+
+// ============== 单元格复杂内容功能 ==============
+// 以下方法支持向表格单元格中添加段落、图片、列表、嵌套表格等复杂内容
+
+// AddCellParagraph 向单元格添加段落
+// 参数:
+//   - row: 行索引（从0开始）
+//   - col: 列索引（从0开始）
+//   - text: 段落文本内容
+//
+// 返回:
+//   - *Paragraph: 新添加的段落对象
+//   - error: 如果索引无效则返回错误
+func (t *Table) AddCellParagraph(row, col int, text string) (*Paragraph, error) {
+	cell, err := t.GetCell(row, col)
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建新段落
+	para := &Paragraph{
+		Runs: []Run{
+			{
+				Text: Text{
+					Content: text,
+					Space:   "preserve",
+				},
+			},
+		},
+	}
+
+	// 添加到单元格
+	cell.Paragraphs = append(cell.Paragraphs, *para)
+
+	Info(fmt.Sprintf("向单元格(%d,%d)添加段落成功", row, col))
+	return &cell.Paragraphs[len(cell.Paragraphs)-1], nil
+}
+
+// AddCellFormattedParagraph 向单元格添加格式化段落
+// 参数:
+//   - row: 行索引（从0开始）
+//   - col: 列索引（从0开始）
+//   - text: 段落文本内容
+//   - format: 文本格式配置
+//
+// 返回:
+//   - *Paragraph: 新添加的段落对象
+//   - error: 如果索引无效则返回错误
+func (t *Table) AddCellFormattedParagraph(row, col int, text string, format *TextFormat) (*Paragraph, error) {
+	cell, err := t.GetCell(row, col)
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建运行属性
+	runProps := &RunProperties{}
+
+	if format != nil {
+		if format.FontFamily != "" {
+			runProps.FontFamily = &FontFamily{
+				ASCII:    format.FontFamily,
+				HAnsi:    format.FontFamily,
+				EastAsia: format.FontFamily,
+				CS:       format.FontFamily,
+			}
+		}
+
+		if format.Bold {
+			runProps.Bold = &Bold{}
+		}
+
+		if format.Italic {
+			runProps.Italic = &Italic{}
+		}
+
+		if format.FontColor != "" {
+			color := strings.TrimPrefix(format.FontColor, "#")
+			runProps.Color = &Color{Val: color}
+		}
+
+		if format.FontSize > 0 {
+			runProps.FontSize = &FontSize{Val: fmt.Sprintf("%d", format.FontSize*2)}
+		}
+
+		if format.Underline {
+			runProps.Underline = &Underline{Val: "single"}
+		}
+
+		if format.Strike {
+			runProps.Strike = &Strike{}
+		}
+
+		if format.Highlight != "" {
+			runProps.Highlight = &Highlight{Val: format.Highlight}
+		}
+	}
+
+	// 创建新段落
+	para := &Paragraph{
+		Runs: []Run{
+			{
+				Properties: runProps,
+				Text: Text{
+					Content: text,
+					Space:   "preserve",
+				},
+			},
+		},
+	}
+
+	// 添加到单元格
+	cell.Paragraphs = append(cell.Paragraphs, *para)
+
+	Info(fmt.Sprintf("向单元格(%d,%d)添加格式化段落成功", row, col))
+	return &cell.Paragraphs[len(cell.Paragraphs)-1], nil
+}
+
+// ClearCellParagraphs 清空单元格中的所有段落，只保留一个空段落
+// 参数:
+//   - row: 行索引（从0开始）
+//   - col: 列索引（从0开始）
+//
+// 返回:
+//   - error: 如果索引无效则返回错误
+func (t *Table) ClearCellParagraphs(row, col int) error {
+	cell, err := t.GetCell(row, col)
+	if err != nil {
+		return err
+	}
+
+	// 清空段落，只保留一个空段落（OOXML规范要求单元格至少有一个段落）
+	cell.Paragraphs = []Paragraph{
+		{
+			Runs: []Run{
+				{
+					Text: Text{Content: ""},
+				},
+			},
+		},
+	}
+
+	Info(fmt.Sprintf("清空单元格(%d,%d)段落成功", row, col))
+	return nil
+}
+
+// GetCellParagraphs 获取单元格中的所有段落
+// 参数:
+//   - row: 行索引（从0开始）
+//   - col: 列索引（从0开始）
+//
+// 返回:
+//   - []Paragraph: 单元格中的所有段落
+//   - error: 如果索引无效则返回错误
+func (t *Table) GetCellParagraphs(row, col int) ([]Paragraph, error) {
+	cell, err := t.GetCell(row, col)
+	if err != nil {
+		return nil, err
+	}
+
+	return cell.Paragraphs, nil
+}
+
+// AddNestedTable 向单元格添加嵌套表格
+// 参数:
+//   - row: 行索引（从0开始）
+//   - col: 列索引（从0开始）
+//   - config: 嵌套表格的配置
+//
+// 返回:
+//   - *Table: 新创建的嵌套表格对象
+//   - error: 如果索引无效或配置无效则返回错误
+func (t *Table) AddNestedTable(row, col int, config *TableConfig) (*Table, error) {
+	cell, err := t.GetCell(row, col)
+	if err != nil {
+		return nil, err
+	}
+
+	if config.Rows <= 0 || config.Cols <= 0 {
+		Error("嵌套表格行数和列数必须大于0")
+		return nil, NewValidationError("TableConfig", "", "嵌套表格行数和列数必须大于0")
+	}
+
+	// 创建嵌套表格
+	nestedTable := &Table{
+		Properties: &TableProperties{
+			TableW: &TableWidth{
+				W:    fmt.Sprintf("%d", config.Width),
+				Type: "dxa",
+			},
+			TableJc: &TableJc{
+				Val: "center",
+			},
+			TableLook: &TableLook{
+				Val:      "04A0",
+				FirstRow: "1",
+				LastRow:  "0",
+				FirstCol: "1",
+				LastCol:  "0",
+				NoHBand:  "0",
+				NoVBand:  "1",
+			},
+			TableBorders: &TableBorders{
+				Top:     &TableBorder{Val: "single", Sz: "4", Space: "0", Color: "auto"},
+				Left:    &TableBorder{Val: "single", Sz: "4", Space: "0", Color: "auto"},
+				Bottom:  &TableBorder{Val: "single", Sz: "4", Space: "0", Color: "auto"},
+				Right:   &TableBorder{Val: "single", Sz: "4", Space: "0", Color: "auto"},
+				InsideH: &TableBorder{Val: "single", Sz: "4", Space: "0", Color: "auto"},
+				InsideV: &TableBorder{Val: "single", Sz: "4", Space: "0", Color: "auto"},
+			},
+			TableLayout: &TableLayoutType{
+				Type: "autofit",
+			},
+			TableCellMar: &TableCellMargins{
+				Left:  &TableCellSpace{W: "108", Type: "dxa"},
+				Right: &TableCellSpace{W: "108", Type: "dxa"},
+			},
+		},
+		Grid: &TableGrid{},
+		Rows: make([]TableRow, 0, config.Rows),
+	}
+
+	// 设置列宽
+	colWidths := config.ColWidths
+	if len(colWidths) == 0 {
+		avgWidth := config.Width / config.Cols
+		colWidths = make([]int, config.Cols)
+		for i := range colWidths {
+			colWidths[i] = avgWidth
+		}
+	} else if len(colWidths) != config.Cols {
+		Error("嵌套表格列宽数量与列数不匹配")
+		return nil, NewValidationError("TableConfig.ColWidths", "", "列宽数量与列数不匹配")
+	}
+
+	// 创建表格网格
+	for _, width := range colWidths {
+		nestedTable.Grid.Cols = append(nestedTable.Grid.Cols, TableGridCol{
+			W: fmt.Sprintf("%d", width),
+		})
+	}
+
+	// 创建表格行和单元格
+	for i := 0; i < config.Rows; i++ {
+		tableRow := TableRow{
+			Cells: make([]TableCell, 0, config.Cols),
+		}
+
+		for j := 0; j < config.Cols; j++ {
+			tableCell := TableCell{
+				Properties: &TableCellProperties{
+					TableCellW: &TableCellW{
+						W:    fmt.Sprintf("%d", colWidths[j]),
+						Type: "dxa",
+					},
+					VAlign: &VAlign{
+						Val: "center",
+					},
+				},
+				Paragraphs: []Paragraph{
+					{
+						Runs: []Run{
+							{
+								Text: Text{Content: ""},
+							},
+						},
+					},
+				},
+			}
+
+			// 如果有初始数据，设置单元格内容
+			if config.Data != nil && i < len(config.Data) && j < len(config.Data[i]) {
+				tableCell.Paragraphs[0].Runs[0].Text.Content = config.Data[i][j]
+			}
+
+			tableRow.Cells = append(tableRow.Cells, tableCell)
+		}
+
+		nestedTable.Rows = append(nestedTable.Rows, tableRow)
+	}
+
+	// 添加到单元格的嵌套表格列表
+	cell.Tables = append(cell.Tables, *nestedTable)
+
+	Info(fmt.Sprintf("向单元格(%d,%d)添加嵌套表格成功：%d行 x %d列", row, col, config.Rows, config.Cols))
+	return &cell.Tables[len(cell.Tables)-1], nil
+}
+
+// GetNestedTables 获取单元格中的所有嵌套表格
+// 参数:
+//   - row: 行索引（从0开始）
+//   - col: 列索引（从0开始）
+//
+// 返回:
+//   - []Table: 单元格中的所有嵌套表格
+//   - error: 如果索引无效则返回错误
+func (t *Table) GetNestedTables(row, col int) ([]Table, error) {
+	cell, err := t.GetCell(row, col)
+	if err != nil {
+		return nil, err
+	}
+
+	return cell.Tables, nil
+}
+
+// CellListConfig 单元格列表配置
+type CellListConfig struct {
+	Type         ListType   // 列表类型
+	BulletSymbol BulletType // 项目符号（仅用于无序列表）
+	Items        []string   // 列表项内容
+}
+
+// AddCellList 向单元格添加列表
+// 参数:
+//   - row: 行索引（从0开始）
+//   - col: 列索引（从0开始）
+//   - config: 列表配置
+//
+// 返回:
+//   - error: 如果索引无效则返回错误
+func (t *Table) AddCellList(row, col int, config *CellListConfig) error {
+	cell, err := t.GetCell(row, col)
+	if err != nil {
+		return err
+	}
+
+	if config == nil || len(config.Items) == 0 {
+		return NewValidationError("CellListConfig", "", "列表配置不能为空且必须包含列表项")
+	}
+
+	// 根据列表类型确定前缀
+	for i, item := range config.Items {
+		var prefix string
+		switch config.Type {
+		case ListTypeBullet:
+			// 使用项目符号
+			bulletSymbol := config.BulletSymbol
+			if bulletSymbol == "" {
+				bulletSymbol = BulletTypeDot
+			}
+			prefix = string(bulletSymbol) + " "
+		case ListTypeNumber, ListTypeDecimal:
+			// 使用数字编号
+			prefix = fmt.Sprintf("%d. ", i+1)
+		case ListTypeLowerLetter:
+			// 使用小写字母
+			prefix = fmt.Sprintf("%c. ", 'a'+i)
+		case ListTypeUpperLetter:
+			// 使用大写字母
+			prefix = fmt.Sprintf("%c. ", 'A'+i)
+		case ListTypeLowerRoman:
+			// 使用小写罗马数字
+			prefix = fmt.Sprintf("%s. ", toRomanLower(i+1))
+		case ListTypeUpperRoman:
+			// 使用大写罗马数字
+			prefix = fmt.Sprintf("%s. ", toRomanUpper(i+1))
+		default:
+			// 默认使用项目符号
+			prefix = string(BulletTypeDot) + " "
+		}
+
+		// 创建列表项段落
+		para := Paragraph{
+			Runs: []Run{
+				{
+					Text: Text{
+						Content: prefix + item,
+						Space:   "preserve",
+					},
+				},
+			},
+		}
+
+		// 添加到单元格
+		cell.Paragraphs = append(cell.Paragraphs, para)
+	}
+
+	Info(fmt.Sprintf("向单元格(%d,%d)添加列表成功：%d个列表项", row, col, len(config.Items)))
+	return nil
+}
+
+// toRomanLower 将数字转换为小写罗马数字
+func toRomanLower(num int) string {
+	return strings.ToLower(toRomanUpper(num))
+}
+
+// toRomanUpper 将数字转换为大写罗马数字
+func toRomanUpper(num int) string {
+	values := []int{1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1}
+	symbols := []string{"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"}
+
+	if num <= 0 || num > 3999 {
+		return fmt.Sprintf("%d", num)
+	}
+
+	result := ""
+	for i, value := range values {
+		for num >= value {
+			result += symbols[i]
+			num -= value
+		}
+	}
+	return result
+}
+
+// CellImageConfig 单元格图片配置
+type CellImageConfig struct {
+	// 图片来源 - 文件路径
+	FilePath string
+	// 图片来源 - 二进制数据
+	Data []byte
+	// 图片格式（当使用Data时需要指定）
+	Format ImageFormat
+	// 图片宽度（毫米），0表示自动
+	Width float64
+	// 图片高度（毫米），0表示自动
+	Height float64
+	// 是否保持宽高比
+	KeepAspectRatio bool
+	// 图片替代文字
+	AltText string
+	// 图片标题
+	Title string
+}

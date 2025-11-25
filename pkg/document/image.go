@@ -1079,6 +1079,168 @@ func (d *Document) SetImageTitle(imageInfo *ImageInfo, title string) error {
 	return nil
 }
 
+// AddCellImage 向表格单元格添加图片
+//
+// 此方法用于向表格单元格中添加图片，支持从文件路径或二进制数据添加。
+// 由于图片需要在文档级别管理资源关系，所以此方法必须在Document上调用。
+//
+// 参数:
+//   - table: 目标表格
+//   - row: 行索引（从0开始）
+//   - col: 列索引（从0开始）
+//   - config: 单元格图片配置
+//
+// 返回:
+//   - *ImageInfo: 添加的图片信息
+//   - error: 如果添加失败则返回错误
+//
+// 示例:
+//
+//	table, _ := doc.AddTable(&document.TableConfig{Rows: 2, Cols: 2, Width: 6000})
+//	imageConfig := &document.CellImageConfig{
+//		FilePath: "logo.png",
+//		Width:    50, // 50mm宽度
+//		KeepAspectRatio: true,
+//	}
+//	imageInfo, err := doc.AddCellImage(table, 0, 0, imageConfig)
+func (d *Document) AddCellImage(table *Table, row, col int, config *CellImageConfig) (*ImageInfo, error) {
+	if table == nil {
+		return nil, fmt.Errorf("表格不能为空")
+	}
+
+	cell, err := table.GetCell(row, col)
+	if err != nil {
+		return nil, err
+	}
+
+	var imageData []byte
+	var format ImageFormat
+	var width, height int
+
+	// 从文件或数据获取图片
+	if config.FilePath != "" {
+		// 从文件读取图片
+		imageData, err = os.ReadFile(config.FilePath)
+		if err != nil {
+			Errorf("读取图片文件失败 %s: %v", config.FilePath, err)
+			return nil, fmt.Errorf("读取图片文件失败: %v", err)
+		}
+
+		// 检测图片格式
+		format, err = detectImageFormat(imageData)
+		if err != nil {
+			Errorf("检测图片格式失败 %s: %v", config.FilePath, err)
+			return nil, fmt.Errorf("检测图片格式失败: %v", err)
+		}
+
+		// 获取图片尺寸
+		width, height, err = getImageDimensions(imageData, format)
+		if err != nil {
+			Errorf("获取图片尺寸失败 %s: %v", config.FilePath, err)
+			return nil, fmt.Errorf("获取图片尺寸失败: %v", err)
+		}
+	} else if len(config.Data) > 0 {
+		// 使用提供的二进制数据
+		imageData = config.Data
+
+		if config.Format == "" {
+			// 检测图片格式
+			format, err = detectImageFormat(imageData)
+			if err != nil {
+				return nil, fmt.Errorf("检测图片格式失败: %v", err)
+			}
+		} else {
+			format = config.Format
+		}
+
+		// 获取图片尺寸
+		width, height, err = getImageDimensions(imageData, format)
+		if err != nil {
+			return nil, fmt.Errorf("获取图片尺寸失败: %v", err)
+		}
+	} else {
+		return nil, fmt.Errorf("必须提供图片文件路径或二进制数据")
+	}
+
+	// 创建图片配置
+	imageConfig := &ImageConfig{
+		Position:  ImagePositionInline,
+		Alignment: AlignCenter,
+		AltText:   config.AltText,
+		Title:     config.Title,
+	}
+
+	if config.Width > 0 || config.Height > 0 {
+		imageConfig.Size = &ImageSize{
+			Width:           config.Width,
+			Height:          config.Height,
+			KeepAspectRatio: config.KeepAspectRatio,
+		}
+	}
+
+	// 使用Document的方法添加图片资源，但不添加到文档主体
+	fileName := "cell_image.png"
+	if config.FilePath != "" {
+		fileName = config.FilePath
+	}
+
+	imageInfo, err := d.AddImageFromDataWithoutElement(imageData, fileName, format, width, height, imageConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建包含图片的段落并添加到单元格
+	paragraph := d.createImageParagraph(imageInfo)
+	cell.Paragraphs = append(cell.Paragraphs, *paragraph)
+
+	Infof("向表格单元格(%d,%d)添加图片成功: ID=%s", row, col, imageInfo.ID)
+	return imageInfo, nil
+}
+
+// AddCellImageFromFile 从文件向表格单元格添加图片（便捷方法）
+//
+// 此方法是AddCellImage的便捷封装，直接从文件路径添加图片。
+//
+// 参数:
+//   - table: 目标表格
+//   - row: 行索引（从0开始）
+//   - col: 列索引（从0开始）
+//   - filePath: 图片文件路径
+//   - widthMM: 图片宽度（毫米），0表示使用原始尺寸
+//
+// 返回:
+//   - *ImageInfo: 添加的图片信息
+//   - error: 如果添加失败则返回错误
+func (d *Document) AddCellImageFromFile(table *Table, row, col int, filePath string, widthMM float64) (*ImageInfo, error) {
+	return d.AddCellImage(table, row, col, &CellImageConfig{
+		FilePath:        filePath,
+		Width:           widthMM,
+		KeepAspectRatio: true,
+	})
+}
+
+// AddCellImageFromData 从二进制数据向表格单元格添加图片（便捷方法）
+//
+// 此方法是AddCellImage的便捷封装，直接从二进制数据添加图片。
+//
+// 参数:
+//   - table: 目标表格
+//   - row: 行索引（从0开始）
+//   - col: 列索引（从0开始）
+//   - data: 图片二进制数据
+//   - widthMM: 图片宽度（毫米），0表示使用原始尺寸
+//
+// 返回:
+//   - *ImageInfo: 添加的图片信息
+//   - error: 如果添加失败则返回错误
+func (d *Document) AddCellImageFromData(table *Table, row, col int, data []byte, widthMM float64) (*ImageInfo, error) {
+	return d.AddCellImage(table, row, col, &CellImageConfig{
+		Data:            data,
+		Width:           widthMM,
+		KeepAspectRatio: true,
+	})
+}
+
 // SetImageAlignment 设置图片对齐方式
 //
 // 此方法用于设置嵌入式图片（ImagePositionInline）的对齐方式。
