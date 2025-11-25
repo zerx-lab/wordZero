@@ -196,10 +196,16 @@ type TableConfig struct {
 }
 
 // CreateTable 创建一个新表格
-func (d *Document) CreateTable(config *TableConfig) *Table {
+// 参数:
+//   - config: 表格配置
+//
+// 返回:
+//   - *Table: 创建的表格对象
+//   - error: 如果配置无效则返回错误
+func (d *Document) CreateTable(config *TableConfig) (*Table, error) {
 	if config.Rows <= 0 || config.Cols <= 0 {
 		Error("表格行数和列数必须大于0")
-		return nil
+		return nil, NewValidationError("TableConfig", "", "表格行数和列数必须大于0")
 	}
 
 	table := &Table{
@@ -289,7 +295,7 @@ func (d *Document) CreateTable(config *TableConfig) *Table {
 		}
 	} else if len(colWidths) != config.Cols {
 		Error("列宽数量与列数不匹配")
-		return nil
+		return nil, NewValidationError("TableConfig.ColWidths", "", "列宽数量与列数不匹配")
 	}
 
 	// 创建表格网格
@@ -350,21 +356,27 @@ func (d *Document) CreateTable(config *TableConfig) *Table {
 	}
 
 	Info(fmt.Sprintf("创建表格成功：%d行 x %d列", config.Rows, config.Cols))
-	return table
+	return table, nil
 }
 
 // AddTable 将表格添加到文档中
-func (d *Document) AddTable(config *TableConfig) *Table {
-	table := d.CreateTable(config)
-	if table == nil {
-		return nil
+// 参数:
+//   - config: 表格配置
+//
+// 返回:
+//   - *Table: 添加的表格对象
+//   - error: 如果配置无效则返回错误
+func (d *Document) AddTable(config *TableConfig) (*Table, error) {
+	table, err := d.CreateTable(config)
+	if err != nil {
+		return nil, err
 	}
 
 	// 将表格添加到文档主体中
 	d.Body.Elements = append(d.Body.Elements, table)
 
 	Info(fmt.Sprintf("表格已添加到文档，当前文档包含%d个表格", len(d.Body.GetTables())))
-	return table
+	return table, nil
 }
 
 // InsertRow 在指定位置插入行

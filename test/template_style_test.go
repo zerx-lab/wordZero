@@ -88,7 +88,10 @@ func TestTemplateStylePreservation(t *testing.T) {
 		Rows: 2,
 		Cols: 3,
 	}
-	table := templateDoc.AddTable(tableConfig)
+	table, err := templateDoc.AddTable(tableConfig)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 
 	// 设置表格头部样式
 	headerRow := table.Rows[0]
@@ -143,7 +146,7 @@ func TestTemplateStylePreservation(t *testing.T) {
 
 	// 保存模板文档
 	templateFile := "test/output/style_template.docx"
-	err := templateDoc.Save(templateFile)
+	err = templateDoc.Save(templateFile)
 	if err != nil {
 		t.Fatalf("保存模板文档失败: %v", err)
 	}

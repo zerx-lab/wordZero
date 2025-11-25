@@ -20,9 +20,9 @@ func TestCreateTable(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 验证表格尺寸
@@ -61,8 +61,8 @@ func TestCreateTableWithInvalidConfig(t *testing.T) {
 		Cols:  3,
 		Width: 6000,
 	}
-	table := doc.CreateTable(config)
-	if table != nil {
+	_, err := doc.CreateTable(config)
+	if err == nil {
 		t.Error("期望创建失败，但成功了")
 	}
 
@@ -72,8 +72,8 @@ func TestCreateTableWithInvalidConfig(t *testing.T) {
 		Cols:  0,
 		Width: 6000,
 	}
-	table = doc.CreateTable(config)
-	if table != nil {
+	_, err = doc.CreateTable(config)
+	if err == nil {
 		t.Error("期望创建失败，但成功了")
 	}
 
@@ -84,8 +84,8 @@ func TestCreateTableWithInvalidConfig(t *testing.T) {
 		Width:     6000,
 		ColWidths: []int{1000, 2000}, // 只有2个列宽，但有4列
 	}
-	table = doc.CreateTable(config)
-	if table != nil {
+	_, err = doc.CreateTable(config)
+	if err == nil {
 		t.Error("期望创建失败，但成功了")
 	}
 }
@@ -101,15 +101,17 @@ func TestAddTable(t *testing.T) {
 	}
 
 	initialTableCount := len(doc.Body.GetTables())
-	table := doc.AddTable(config)
+	table, err := doc.AddTable(config)
 
-	if table == nil {
-		t.Fatal("添加表格失败")
+	if err != nil {
+		t.Fatalf("添加表格失败: %v", err)
 	}
 
 	if len(doc.Body.GetTables()) != initialTableCount+1 {
 		t.Errorf("期望表格数量%d，实际%d", initialTableCount+1, len(doc.Body.GetTables()))
 	}
+
+	_ = table // 使用table变量避免编译警告
 }
 
 // TestTableCellOperations 测试单元格操作
@@ -122,13 +124,13 @@ func TestTableCellOperations(t *testing.T) {
 		Width: 4000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试设置单元格内容
-	err := table.SetCellText(0, 0, "测试内容")
+	err = table.SetCellText(0, 0, "测试内容")
 	if err != nil {
 		t.Errorf("设置单元格内容失败: %v", err)
 	}
@@ -168,15 +170,15 @@ func TestInsertRow(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	initialRowCount := table.GetRowCount()
 
 	// 在中间插入行
-	err := table.InsertRow(1, []string{"A1.5", "B1.5", "C1.5"})
+	err = table.InsertRow(1, []string{"A1.5", "B1.5", "C1.5"})
 	if err != nil {
 		t.Errorf("插入行失败: %v", err)
 	}
@@ -215,13 +217,13 @@ func TestInsertRowInvalidCases(t *testing.T) {
 		Width: 6000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试无效位置
-	err := table.InsertRow(-1, []string{"A", "B", "C"})
+	err = table.InsertRow(-1, []string{"A", "B", "C"})
 	if err == nil {
 		t.Error("期望插入无效位置失败，但成功了")
 	}
@@ -254,15 +256,15 @@ func TestDeleteRow(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	initialRowCount := table.GetRowCount()
 
 	// 删除第2行（索引1）
-	err := table.DeleteRow(1)
+	err = table.DeleteRow(1)
 	if err != nil {
 		t.Errorf("删除行失败: %v", err)
 	}
@@ -291,13 +293,13 @@ func TestDeleteRowInvalidCases(t *testing.T) {
 		Width: 6000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试删除唯一的行
-	err := table.DeleteRow(0)
+	err = table.DeleteRow(0)
 	if err == nil {
 		t.Error("期望删除唯一行失败，但成功了")
 	}
@@ -334,15 +336,15 @@ func TestDeleteRows(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	initialRowCount := table.GetRowCount()
 
 	// 删除第2到第4行（索引1到3）
-	err := table.DeleteRows(1, 3)
+	err = table.DeleteRows(1, 3)
 	if err != nil {
 		t.Errorf("删除多行失败: %v", err)
 	}
@@ -377,15 +379,15 @@ func TestInsertColumn(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	initialColCount := table.GetColumnCount()
 
 	// 在中间插入列
-	err := table.InsertColumn(1, []string{"C1", "C2", "C3"}, 1000)
+	err = table.InsertColumn(1, []string{"C1", "C2", "C3"}, 1000)
 	if err != nil {
 		t.Errorf("插入列失败: %v", err)
 	}
@@ -429,15 +431,15 @@ func TestDeleteColumn(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	initialColCount := table.GetColumnCount()
 
 	// 删除第2列（索引1）
-	err := table.DeleteColumn(1)
+	err = table.DeleteColumn(1)
 	if err != nil {
 		t.Errorf("删除列失败: %v", err)
 	}
@@ -470,15 +472,15 @@ func TestDeleteColumns(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	initialColCount := table.GetColumnCount()
 
 	// 删除第2到第4列（索引1到3）
-	err := table.DeleteColumns(1, 3)
+	err = table.DeleteColumns(1, 3)
 	if err != nil {
 		t.Errorf("删除多列失败: %v", err)
 	}
@@ -512,9 +514,9 @@ func TestClearTable(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 清空表格
@@ -556,9 +558,9 @@ func TestCopyTable(t *testing.T) {
 		},
 	}
 
-	originalTable := doc.CreateTable(config)
-	if originalTable == nil {
-		t.Fatal("创建原始表格失败")
+	originalTable, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建原始表格失败: %v", err)
 	}
 
 	// 复制表格
@@ -590,7 +592,7 @@ func TestCopyTable(t *testing.T) {
 	}
 
 	// 修改复制的表格，验证独立性
-	err := copiedTable.SetCellText(0, 0, "修改后")
+	err = copiedTable.SetCellText(0, 0, "修改后")
 	if err != nil {
 		t.Errorf("修改复制表格失败: %v", err)
 	}
@@ -618,9 +620,9 @@ func TestTableWithCustomColumnWidths(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建自定义列宽表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建自定义列宽表格失败: %v", err)
 	}
 
 	// 验证表格创建成功
@@ -647,9 +649,9 @@ func TestTableElementType(t *testing.T) {
 		Width: 2000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试表格元素类型
@@ -674,9 +676,9 @@ func TestCellFormattedText(t *testing.T) {
 		Width: 4000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试设置富文本内容
@@ -688,7 +690,7 @@ func TestCellFormattedText(t *testing.T) {
 		FontFamily: "Arial",
 	}
 
-	err := table.SetCellFormattedText(0, 0, "富文本测试", format)
+	err = table.SetCellFormattedText(0, 0, "富文本测试", format)
 	if err != nil {
 		t.Errorf("设置富文本内容失败: %v", err)
 	}
@@ -719,13 +721,13 @@ func TestCellFormat(t *testing.T) {
 		Width: 4000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 设置单元格内容
-	err := table.SetCellText(0, 0, "格式测试")
+	err = table.SetCellText(0, 0, "格式测试")
 	if err != nil {
 		t.Errorf("设置单元格内容失败: %v", err)
 	}
@@ -779,15 +781,15 @@ func TestCellMergeHorizontal(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	initialColCount := table.GetColumnCount()
 
 	// 合并第一行的第2到第4列（索引1到3）
-	err := table.MergeCellsHorizontal(0, 1, 3)
+	err = table.MergeCellsHorizontal(0, 1, 3)
 	if err != nil {
 		t.Errorf("水平合并单元格失败: %v", err)
 	}
@@ -837,13 +839,13 @@ func TestCellMergeVertical(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 合并第2列的第1到第3行（索引0到2）
-	err := table.MergeCellsVertical(0, 2, 1)
+	err = table.MergeCellsVertical(0, 2, 1)
 	if err != nil {
 		t.Errorf("垂直合并单元格失败: %v", err)
 	}
@@ -877,13 +879,13 @@ func TestCellMergeRange(t *testing.T) {
 		Width: 8000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 合并2x2区域（行0-1，列1-2）
-	err := table.MergeCellsRange(0, 1, 1, 2)
+	err = table.MergeCellsRange(0, 1, 1, 2)
 	if err != nil {
 		t.Errorf("区域合并失败: %v", err)
 	}
@@ -908,13 +910,13 @@ func TestUnmergeCells(t *testing.T) {
 		Width: 6000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 先进行水平合并
-	err := table.MergeCellsHorizontal(0, 0, 1)
+	err = table.MergeCellsHorizontal(0, 0, 1)
 	if err != nil {
 		t.Errorf("水平合并失败: %v", err)
 	}
@@ -954,9 +956,9 @@ func TestCellContentOperations(t *testing.T) {
 		Width: 4000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 设置格式化内容
@@ -964,7 +966,7 @@ func TestCellContentOperations(t *testing.T) {
 		Bold:     true,
 		FontSize: 12,
 	}
-	err := table.SetCellFormattedText(0, 0, "测试内容", format)
+	err = table.SetCellFormattedText(0, 0, "测试内容", format)
 	if err != nil {
 		t.Errorf("设置格式化内容失败: %v", err)
 	}
@@ -1016,13 +1018,13 @@ func TestCellMergeInvalidCases(t *testing.T) {
 		Width: 4000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试无效的水平合并
-	err := table.MergeCellsHorizontal(0, 0, 0)
+	err = table.MergeCellsHorizontal(0, 0, 0)
 	if err == nil {
 		t.Error("期望相同列合并失败，但成功了")
 	}
@@ -1065,13 +1067,13 @@ func TestCellPadding(t *testing.T) {
 		Width: 2000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试设置内边距
-	err := table.SetCellPadding(0, 0, 10)
+	err = table.SetCellPadding(0, 0, 10)
 	if err != nil {
 		t.Errorf("设置单元格内边距失败: %v", err)
 	}
@@ -1093,9 +1095,9 @@ func TestCellTextDirection(t *testing.T) {
 		Width: 6000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试设置不同的文字方向
@@ -1150,9 +1152,9 @@ func TestCellFormatWithTextDirection(t *testing.T) {
 		Width: 4000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 通过CellFormat设置完整格式，包括文字方向
@@ -1166,7 +1168,7 @@ func TestCellFormatWithTextDirection(t *testing.T) {
 		TextDirection:   TextDirectionTB, // 从上到下
 	}
 
-	err := table.SetCellText(0, 0, "竖排文字")
+	err = table.SetCellText(0, 0, "竖排文字")
 	if err != nil {
 		t.Errorf("设置单元格文本失败: %v", err)
 	}
@@ -1232,9 +1234,9 @@ func TestRowHeight(t *testing.T) {
 		Width: 4000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试设置固定行高
@@ -1243,7 +1245,7 @@ func TestRowHeight(t *testing.T) {
 		Rule:   RowHeightExact,
 	}
 
-	err := table.SetRowHeight(0, heightConfig)
+	err = table.SetRowHeight(0, heightConfig)
 	if err != nil {
 		t.Errorf("设置行高失败: %v", err)
 	}
@@ -1309,9 +1311,9 @@ func TestTableLayout(t *testing.T) {
 		Width: 4000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试设置表格布局
@@ -1321,7 +1323,7 @@ func TestTableLayout(t *testing.T) {
 		Position:  PositionInline,
 	}
 
-	err := table.SetTableLayout(layoutConfig)
+	err = table.SetTableLayout(layoutConfig)
 	if err != nil {
 		t.Errorf("设置表格布局失败: %v", err)
 	}
@@ -1354,13 +1356,13 @@ func TestTablePageBreak(t *testing.T) {
 		Width: 4000,
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试设置行禁止跨页分割
-	err := table.SetRowKeepTogether(0, true)
+	err = table.SetRowKeepTogether(0, true)
 	if err != nil {
 		t.Errorf("设置行禁止跨页分割失败: %v", err)
 	}

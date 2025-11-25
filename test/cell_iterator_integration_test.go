@@ -26,9 +26,9 @@ func TestCellIteratorIntegration(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试1: 基本迭代器功能

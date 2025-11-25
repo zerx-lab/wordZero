@@ -1127,7 +1127,10 @@ func TestRemoveElementAt(t *testing.T) {
 
 	// 添加段落和表格
 	doc.AddParagraph("段落1")
-	doc.AddTable(&TableConfig{Rows: 2, Cols: 2})
+	_, err := doc.AddTable(&TableConfig{Rows: 2, Cols: 2})
+	if err != nil {
+		t.Fatalf("添加表格失败: %v", err)
+	}
 	doc.AddParagraph("段落2")
 
 	// 验证初始状态

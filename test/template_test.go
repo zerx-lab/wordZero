@@ -194,10 +194,13 @@ func testLoopStatementsIntegration(t *testing.T) {
 			{"", "", ""},
 		},
 	}
-	doc.AddTable(tableConfig)
+	_, err := doc.AddTable(tableConfig)
+	if err != nil {
+		t.Fatalf("Failed to add table: %v", err)
+	}
 
 	engine := document.NewTemplateEngine()
-	_, err := engine.LoadTemplateFromDocument("inventory_report", doc)
+	_, err = engine.LoadTemplateFromDocument("inventory_report", doc)
 	if err != nil {
 		t.Fatalf("Failed to load template from document: %v", err)
 	}

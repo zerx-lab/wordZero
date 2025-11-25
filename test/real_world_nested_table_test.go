@@ -26,11 +26,14 @@ func TestRealWorldNestedTableScenario(t *testing.T) {
 	doc.AddParagraph("")
 
 	// 创建主表格（简历表格）
-	mainTable := doc.CreateTable(&document.TableConfig{
+	mainTable, err := doc.CreateTable(&document.TableConfig{
 		Rows:  2,
 		Cols:  2,
 		Width: 9000,
 	})
+	if err != nil {
+		t.Fatalf("创建主表格失败: %v", err)
+	}
 	doc.Body.Elements = append(doc.Body.Elements, mainTable)
 
 	// 第一行：简历标题
@@ -97,7 +100,7 @@ func TestRealWorldNestedTableScenario(t *testing.T) {
 	
 	// 保存模板文档
 	templatePath := "output/resume_template.docx"
-	err := doc.Save(templatePath)
+	err = doc.Save(templatePath)
 	if err != nil {
 		t.Fatalf("保存模板文档失败: %v", err)
 	}

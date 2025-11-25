@@ -22,9 +22,9 @@ func TestTableInsertAndMergeFix(t *testing.T) {
 			Width: 6000,
 		}
 
-		table := doc.AddTable(config)
-		if table == nil {
-			t.Fatal("创建表格失败")
+		table, err := doc.AddTable(config)
+		if err != nil {
+			t.Fatalf("创建表格失败: %v", err)
 		}
 
 		// 设置第一行的单元格文本
@@ -33,7 +33,7 @@ func TestTableInsertAndMergeFix(t *testing.T) {
 		table.SetCellText(0, 2, "Header3")
 
 		// 添加新行
-		err := table.AppendRow([]string{"Row2-1", "Row2-2", "Row2-3"})
+		err = table.AppendRow([]string{"Row2-1", "Row2-2", "Row2-3"})
 		if err != nil {
 			t.Fatalf("添加行失败: %v", err)
 		}
@@ -70,9 +70,9 @@ func TestTableInsertAndMergeFix(t *testing.T) {
 			Width: 10000,
 		}
 
-		table := doc.AddTable(config)
-		if table == nil {
-			t.Fatal("创建表格失败")
+		table, err := doc.AddTable(config)
+		if err != nil {
+			t.Fatalf("创建表格失败: %v", err)
 		}
 
 		// 填充数据
@@ -138,7 +138,7 @@ func TestTableInsertAndMergeFix(t *testing.T) {
 		}
 
 		// 保存文档
-		err := doc.Save("test/output/large_table_merge_test.docx")
+		err = doc.Save("test/output/large_table_merge_test.docx")
 		if err != nil {
 			t.Errorf("保存文档失败: %v", err)
 		}
@@ -154,13 +154,13 @@ func TestTableInsertAndMergeFix(t *testing.T) {
 			Width: 8000,
 		}
 
-		table := doc.AddTable(config)
-		if table == nil {
-			t.Fatal("创建表格失败")
+		table, err := doc.AddTable(config)
+		if err != nil {
+			t.Fatalf("创建表格失败: %v", err)
 		}
 
 		// 先合并一些单元格
-		err := table.MergeCellsHorizontal(1, 1, 2)
+		err = table.MergeCellsHorizontal(1, 1, 2)
 		if err != nil {
 			t.Fatalf("初始合并失败: %v", err)
 		}
@@ -213,9 +213,9 @@ func TestTableGridConsistencyAfterFix(t *testing.T) {
 		ColWidths: []int{1500, 2000, 2500, 2000},
 	}
 
-	table := doc.AddTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 记录原始列宽
@@ -255,7 +255,7 @@ func TestTableGridConsistencyAfterFix(t *testing.T) {
 	}
 
 	// 进行一些合并操作
-	err := table.MergeCellsHorizontal(5, 1, 2)
+	err = table.MergeCellsHorizontal(5, 1, 2)
 	if err != nil {
 		t.Fatalf("合并失败: %v", err)
 	}

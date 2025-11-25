@@ -27,7 +27,10 @@ func TestTableBorders(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	if table == nil {
 		t.Fatal("创建表格失败")
 	}
@@ -72,7 +75,7 @@ func TestTableBorders(t *testing.T) {
 		},
 	}
 
-	err := table.SetTableBorders(borderConfig)
+	err = table.SetTableBorders(borderConfig)
 	if err != nil {
 		t.Fatalf("设置表格边框失败: %v", err)
 	}
@@ -99,7 +102,10 @@ func TestCellBorders(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	if table == nil {
 		t.Fatal("创建表格失败")
 	}
@@ -138,7 +144,7 @@ func TestCellBorders(t *testing.T) {
 		},
 	}
 
-	err := table.SetCellBorders(0, 0, cellBorderConfig)
+	err = table.SetCellBorders(0, 0, cellBorderConfig)
 	if err != nil {
 		t.Fatalf("设置单元格边框失败: %v", err)
 	}
@@ -166,7 +172,10 @@ func TestTableShading(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	if table == nil {
 		t.Fatal("创建表格失败")
 	}
@@ -178,7 +187,7 @@ func TestTableShading(t *testing.T) {
 		BackgroundColor: "E0E0E0",
 	}
 
-	err := table.SetTableShading(shadingConfig)
+	err = table.SetTableShading(shadingConfig)
 	if err != nil {
 		t.Fatalf("设置表格背景失败: %v", err)
 	}
@@ -206,7 +215,10 @@ func TestCellShading(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	if table == nil {
 		t.Fatal("创建表格失败")
 	}
@@ -232,7 +244,7 @@ func TestCellShading(t *testing.T) {
 			BackgroundColor: tc.backgroundColor,
 		}
 
-		err := table.SetCellShading(tc.row, tc.col, shadingConfig)
+		err = table.SetCellShading(tc.row, tc.col, shadingConfig)
 		if err != nil {
 			t.Fatalf("设置单元格(%d,%d)背景失败: %v", tc.row, tc.col, err)
 		}
@@ -263,13 +275,16 @@ func TestAlternatingRowColors(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	if table == nil {
 		t.Fatal("创建表格失败")
 	}
 
 	// 测试设置奇偶行颜色交替
-	err := table.SetAlternatingRowColors("F0F0F0", "FFFFFF")
+	err = table.SetAlternatingRowColors("F0F0F0", "FFFFFF")
 	if err != nil {
 		t.Fatalf("设置奇偶行颜色交替失败: %v", err)
 	}
@@ -298,7 +313,10 @@ func TestTableStyleTemplates(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	if table == nil {
 		t.Fatal("创建表格失败")
 	}
@@ -312,7 +330,7 @@ func TestTableStyleTemplates(t *testing.T) {
 		BandedColumns:  false,
 	}
 
-	err := table.ApplyTableStyle(styleConfig)
+	err = table.ApplyTableStyle(styleConfig)
 	if err != nil {
 		t.Fatalf("应用表格样式模板失败: %v", err)
 	}
@@ -340,7 +358,10 @@ func TestCustomTableStyle(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	if table == nil {
 		t.Fatal("创建表格失败")
 	}
@@ -392,7 +413,7 @@ func TestCustomTableStyle(t *testing.T) {
 	}
 
 	// 测试创建自定义表格样式
-	err := table.CreateCustomTableStyle("CustomStyle1", "自定义样式1", borderConfig, shadingConfig, true)
+	err = table.CreateCustomTableStyle("CustomStyle1", "自定义样式1", borderConfig, shadingConfig, true)
 	if err != nil {
 		t.Fatalf("创建自定义表格样式失败: %v", err)
 	}
@@ -419,7 +440,10 @@ func TestRemoveBorders(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	if table == nil {
 		t.Fatal("创建表格失败")
 	}
@@ -452,7 +476,7 @@ func TestRemoveBorders(t *testing.T) {
 		},
 	}
 
-	err := table.SetTableBorders(borderConfig)
+	err = table.SetTableBorders(borderConfig)
 	if err != nil {
 		t.Fatalf("设置表格边框失败: %v", err)
 	}
@@ -494,7 +518,10 @@ func TestComplexTableStyle(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	if table == nil {
 		t.Fatal("创建表格失败")
 	}
@@ -508,7 +535,7 @@ func TestComplexTableStyle(t *testing.T) {
 		BandedRows:        true,
 	}
 
-	err := table.ApplyTableStyle(styleConfig)
+	err = table.ApplyTableStyle(styleConfig)
 	if err != nil {
 		t.Fatalf("应用表格样式失败: %v", err)
 	}
@@ -591,9 +618,9 @@ func BenchmarkTableStyleOperations(b *testing.B) {
 		Width: 7500,
 	}
 
-	table := doc.AddTable(config)
-	if table == nil {
-		b.Fatal("创建表格失败")
+	table, err := doc.AddTable(config)
+	if err != nil {
+		b.Fatalf("创建表格失败: %v", err)
 	}
 
 	borderConfig := &document.TableBorderConfig{
@@ -638,7 +665,7 @@ func BenchmarkTableStyleOperations(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		err := table.SetTableBorders(borderConfig)
+		err = table.SetTableBorders(borderConfig)
 		if err != nil {
 			b.Fatalf("设置表格边框失败: %v", err)
 		}
@@ -677,7 +704,10 @@ func TestBorderStyles(t *testing.T) {
 			},
 		}
 
-		table := doc.AddTable(config)
+		table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 		if table == nil {
 			t.Fatalf("创建表格%d失败", i+1)
 		}
@@ -709,7 +739,7 @@ func TestBorderStyles(t *testing.T) {
 			},
 		}
 
-		err := table.SetTableBorders(borderConfig)
+		err = table.SetTableBorders(borderConfig)
 		if err != nil {
 			t.Fatalf("设置表格%d边框失败: %v", i+1, err)
 		}
@@ -745,14 +775,17 @@ func TestShadingPatterns(t *testing.T) {
 		Width: 3000,
 	}
 
-	table := doc.AddTable(config)
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	if table == nil {
 		t.Fatal("创建表格失败")
 	}
 
 	for i, pattern := range patterns {
 		// 设置单元格内容
-		err := table.SetCellText(i, 0, fmt.Sprintf("图案%d", i+1))
+		err = table.SetCellText(i, 0, fmt.Sprintf("图案%d", i+1))
 		if err != nil {
 			t.Fatalf("设置单元格文本失败: %v", err)
 		}

@@ -25,11 +25,14 @@ func TestNestedTableTemplate(t *testing.T) {
 	doc.AddParagraph("")
 
 	// 创建外层表格（2行2列）
-	outerTable := doc.CreateTable(&document.TableConfig{
+	outerTable, err := doc.CreateTable(&document.TableConfig{
 		Rows:  2,
 		Cols:  2,
 		Width: 9000,
 	})
+	if err != nil {
+		t.Fatalf("创建外层表格失败: %v", err)
+	}
 	doc.Body.Elements = append(doc.Body.Elements, outerTable)
 
 	// 设置外层表格第一行内容
@@ -164,7 +167,7 @@ func TestNestedTableTemplate(t *testing.T) {
 
 	// 保存模板文档
 	templatePath := "output/nested_table_template.docx"
-	err := doc.Save(templatePath)
+	err = doc.Save(templatePath)
 	if err != nil {
 		t.Fatalf("保存模板文档失败: %v", err)
 	}

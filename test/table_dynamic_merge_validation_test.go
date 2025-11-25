@@ -23,9 +23,9 @@ func TestTableDynamicRowMergeValidation(t *testing.T) {
 			Width: 10000,
 		}
 
-		table := doc.AddTable(config)
-		if table == nil {
-			t.Fatal("创建表格失败")
+		table, err := doc.AddTable(config)
+		if err != nil {
+			t.Fatalf("创建表格失败: %v", err)
 		}
 
 		// 填充前28行数据
@@ -48,7 +48,7 @@ func TestTableDynamicRowMergeValidation(t *testing.T) {
 		}
 
 		// 动态添加第29行
-		err := table.AppendRow([]string{"Row29-1", "Row29-2", "Row29-3", "Row29-4", "Row29-5"})
+		err = table.AppendRow([]string{"Row29-1", "Row29-2", "Row29-3", "Row29-4", "Row29-5"})
 		if err != nil {
 			t.Fatalf("添加第29行失败: %v", err)
 		}
@@ -160,9 +160,9 @@ func TestTableDynamicRowMergeValidation(t *testing.T) {
 			Width: 10000,
 		}
 
-		table := doc.AddTable(config)
-		if table == nil {
-			t.Fatal("创建表格失败")
+		table, err := doc.AddTable(config)
+		if err != nil {
+			t.Fatalf("创建表格失败: %v", err)
 		}
 
 		// 填充所有29行数据
@@ -199,7 +199,7 @@ func TestTableDynamicRowMergeValidation(t *testing.T) {
 		}
 
 		// 保存文档供对比
-		err := doc.Save("test/output/static_table_merge_validation.docx")
+		err = doc.Save("test/output/static_table_merge_validation.docx")
 		if err != nil {
 			t.Logf("警告：保存文档失败: %v", err)
 		} else {
@@ -219,9 +219,9 @@ func TestTableDynamicRowMergeValidation(t *testing.T) {
 			ColWidths: customWidths,
 		}
 
-		table := doc.AddTable(config)
-		if table == nil {
-			t.Fatal("创建表格失败")
+		table, err := doc.AddTable(config)
+		if err != nil {
+			t.Fatalf("创建表格失败: %v", err)
 		}
 
 		// 记录每列的预期宽度
@@ -317,7 +317,10 @@ func TestTableGridColCountAfterOperations(t *testing.T) {
 			Width: 8000,
 		}
 
-		table := doc.AddTable(config)
+		table, err := doc.AddTable(config)
+		if err != nil {
+			t.Fatalf("创建表格失败: %v", err)
+		}
 		originalGridColCount := len(table.Grid.Cols)
 
 		// 添加10行
@@ -347,7 +350,10 @@ func TestTableGridColCountAfterOperations(t *testing.T) {
 			Width: 9000,
 		}
 
-		table := doc.AddTable(config)
+		table, err := doc.AddTable(config)
+		if err != nil {
+			t.Fatalf("创建表格失败: %v", err)
+		}
 		originalGridColCount := len(table.Grid.Cols)
 
 		// 合并多个单元格

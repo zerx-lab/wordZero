@@ -20,9 +20,9 @@ func TestCellIterator(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 测试迭代器创建
@@ -100,7 +100,10 @@ func TestCellIteratorReset(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	iterator := table.NewCellIterator()
 
 	// 先迭代一些单元格
@@ -137,7 +140,10 @@ func TestCellIteratorProgress(t *testing.T) {
 		Width: 3000,
 	}
 
-	table := doc.CreateTable(config)
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	iterator := table.NewCellIterator()
 
 	// 初始进度应为0
@@ -175,11 +181,14 @@ func TestTableForEach(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 
 	// 测试ForEach遍历
 	var visitedCells []string
-	err := table.ForEach(func(row, col int, cell *TableCell, text string) error {
+	err = table.ForEach(func(row, col int, cell *TableCell, text string) error {
 		visitedCells = append(visitedCells, fmt.Sprintf("%d-%d:%s", row, col, text))
 		return nil
 	})
@@ -218,11 +227,14 @@ func TestForEachInRow(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 
 	// 测试遍历第2行（索引1）
 	var visitedCells []string
-	err := table.ForEachInRow(1, func(col int, cell *TableCell, text string) error {
+	err = table.ForEachInRow(1, func(col int, cell *TableCell, text string) error {
 		visitedCells = append(visitedCells, fmt.Sprintf("%d:%s", col, text))
 		return nil
 	})
@@ -265,11 +277,14 @@ func TestForEachInColumn(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 
 	// 测试遍历第2列（索引1）
 	var visitedCells []string
-	err := table.ForEachInColumn(1, func(row int, cell *TableCell, text string) error {
+	err = table.ForEachInColumn(1, func(row int, cell *TableCell, text string) error {
 		visitedCells = append(visitedCells, fmt.Sprintf("%d:%s", row, text))
 		return nil
 	})
@@ -313,7 +328,10 @@ func TestGetCellRange(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 
 	// 测试获取2x2范围 (1,1) 到 (2,2)
 	cells, err := table.GetCellRange(1, 1, 2, 2)
@@ -374,7 +392,10 @@ func TestFindCells(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 
 	// 查找包含"apple"的单元格
 	cells, err := table.FindCells(func(row, col int, cell *TableCell, text string) bool {
@@ -417,7 +438,10 @@ func TestFindCellsByText(t *testing.T) {
 		},
 	}
 
-	table := doc.CreateTable(config)
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 
 	// 精确匹配
 	cells, err := table.FindCellsByText("test", true)
@@ -453,7 +477,10 @@ func TestEmptyTable(t *testing.T) {
 		Width: 2000,
 	}
 
-	table := doc.CreateTable(config)
+	table, err := doc.CreateTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
+	}
 	iterator := table.NewCellIterator()
 
 	if iterator.Total() != 1 {

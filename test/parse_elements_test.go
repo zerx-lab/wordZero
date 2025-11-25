@@ -34,9 +34,9 @@ func TestParseElementsIntegration(t *testing.T) {
 			{"数据4", "数据5", "数据6"},
 		},
 	}
-	table := doc.AddTable(tableConfig)
-	if table == nil {
-		t.Fatal("添加表格失败")
+	_, err := doc.AddTable(tableConfig)
+	if err != nil {
+		t.Fatalf("添加表格失败: %v", err)
 	}
 
 	// 添加普通段落
@@ -44,7 +44,7 @@ func TestParseElementsIntegration(t *testing.T) {
 
 	// 保存文档
 	testFile := "test_parse_elements.docx"
-	err := doc.Save(testFile)
+	err = doc.Save(testFile)
 	if err != nil {
 		t.Fatalf("保存文档失败: %v", err)
 	}

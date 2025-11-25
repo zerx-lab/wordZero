@@ -26,9 +26,9 @@ func TestTableDefaultStyle(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 验证表格属性是否设置了默认边框
@@ -107,9 +107,9 @@ func TestDefaultStyleMatchesTmpTest(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 验证表格的边框样式与tmp_test参考表格一致
@@ -176,9 +176,9 @@ func TestDefaultStyleOverride(t *testing.T) {
 		},
 	}
 
-	table := doc.AddTable(config)
-	if table == nil {
-		t.Fatal("创建表格失败")
+	table, err := doc.AddTable(config)
+	if err != nil {
+		t.Fatalf("创建表格失败: %v", err)
 	}
 
 	// 验证默认边框已设置
@@ -226,7 +226,7 @@ func TestDefaultStyleOverride(t *testing.T) {
 		},
 	}
 
-	err := table.SetTableBorders(borderConfig)
+	err = table.SetTableBorders(borderConfig)
 	if err != nil {
 		t.Fatalf("覆盖边框样式失败: %v", err)
 	}

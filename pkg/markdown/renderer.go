@@ -478,7 +478,10 @@ func (r *WordRenderer) renderTable(node *extast.Table) (ast.WalkStatus, error) {
 	}
 
 	// 添加表格到文档
-	table := r.doc.AddTable(config)
+	table, err := r.doc.AddTable(config)
+	if err != nil && r.opts.ErrorCallback != nil {
+		r.opts.ErrorCallback(NewConversionError("AddTable", err.Error(), 0, 0, err))
+	}
 	if table != nil {
 		// 设置表头样式（如果有的话）
 		if len(tableData) > 0 {
