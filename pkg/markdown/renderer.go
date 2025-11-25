@@ -947,9 +947,26 @@ func convertLaTeXToDisplay(latex string) string {
 		`\right`:  "",
 	}
 
-	// 应用替换
-	for latex_cmd, unicode := range replacements {
-		latex = strings.ReplaceAll(latex, latex_cmd, unicode)
+	// 应用替换 - 按长度降序排列，确保较长的命令先被替换
+	// 这样避免 \neq 和 \ne 等命令冲突
+	type replacement struct {
+		cmd     string
+		unicode string
+	}
+	sortedReplacements := make([]replacement, 0, len(replacements))
+	for cmd, u := range replacements {
+		sortedReplacements = append(sortedReplacements, replacement{cmd, u})
+	}
+	// 按命令长度降序排序
+	for i := 0; i < len(sortedReplacements); i++ {
+		for j := i + 1; j < len(sortedReplacements); j++ {
+			if len(sortedReplacements[j].cmd) > len(sortedReplacements[i].cmd) {
+				sortedReplacements[i], sortedReplacements[j] = sortedReplacements[j], sortedReplacements[i]
+			}
+		}
+	}
+	for _, r := range sortedReplacements {
+		latex = strings.ReplaceAll(latex, r.cmd, r.unicode)
 	}
 
 	// 清理多余的花括号
