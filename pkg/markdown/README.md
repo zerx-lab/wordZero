@@ -123,6 +123,7 @@ options := &markdown.ConvertOptions{
     EnableGFM:         true,     // 启用GitHub风味Markdown
     EnableFootnotes:   true,     // 启用脚注支持
     EnableTables:      true,     // 启用表格支持
+    EnableMath:        true,     // 启用数学公式支持（LaTeX语法）
     DefaultFontFamily: "Calibri", // 默认字体
     DefaultFontSize:   11.0,     // 默认字号
     GenerateTOC:       true,     // 生成目录
@@ -161,6 +162,8 @@ converter := markdown.NewConverter(options)
 | `![图片](src)` | 图片 | `AddImageFromFile()` |
 | `\| 表格 \|` | Word表格 | `AddTable()` |
 | `- 列表` | 项目符号列表 | `AddBulletList()` |
+| `$公式$` | 数学公式 | Cambria Math字体 |
+| `$$公式$$` | 块级数学公式 | 居中显示 |
 
 ## 批量转换
 
@@ -201,10 +204,33 @@ options := &markdown.ExportOptions{
 2. 复杂的表格布局可能需要手动调整
 3. 图片需要单独处理导出
 4. 某些Word样式在Markdown中没有直接对应
+5. 数学公式转换使用Unicode字符和Cambria Math字体，支持常见的LaTeX语法
+
+## 数学公式支持
+
+### 行内公式
+使用单个美元符号包裹：`$E = mc^2$`
+
+### 块级公式
+使用双美元符号包裹：
+```
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+```
+
+### 支持的LaTeX语法
+- 希腊字母：`\alpha`, `\beta`, `\gamma`, `\pi`, `\sigma` 等
+- 运算符：`\times`, `\div`, `\pm`, `\leq`, `\geq`, `\neq` 等
+- 上下标：`x^2`, `x_i`, `x^{n+1}`, `x_{i,j}` 等
+- 分数：`\frac{a}{b}`
+- 根号：`\sqrt{x}`, `\sqrt[3]{x}`
+- 特殊符号：`\infty`, `\sum`, `\int`, `\partial`, `\nabla` 等
+- 箭头：`\rightarrow`, `\leftarrow`, `\Rightarrow` 等
 
 ## 未来计划
 
-- [ ] 数学公式支持
+- [x] 数学公式支持
 - [ ] Mermaid图表转换
 - [ ] 更好的列表嵌套支持
 - [ ] 自定义样式映射

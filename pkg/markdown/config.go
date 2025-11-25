@@ -10,6 +10,7 @@ type ConvertOptions struct {
 	EnableFootnotes bool // 启用脚注支持
 	EnableTables    bool // 启用表格支持
 	EnableTaskList  bool // 启用任务列表
+	EnableMath      bool // 启用数学公式支持（LaTeX语法）
 
 	// 样式配置
 	StyleMapping      map[string]string // 自定义样式映射
@@ -46,6 +47,7 @@ func DefaultOptions() *ConvertOptions {
 		EnableFootnotes:   true,
 		EnableTables:      true,
 		EnableTaskList:    true,
+		EnableMath:        true, // 默认启用数学公式支持
 		DefaultFontFamily: "Calibri",
 		DefaultFontSize:   11.0,
 		EmbedImages:       false,
