@@ -299,3 +299,67 @@ func TestCreateRunProperties(t *testing.T) {
 		t.Error("高亮设置不正确")
 	}
 }
+
+func TestCreateParagraphPropertiesWithSnapToGrid(t *testing.T) {
+	// 测试 SnapToGrid = false 时禁用网格对齐
+	snapToGridFalse := false
+	config := &QuickParagraphConfig{
+		Alignment:   "left",
+		LineSpacing: 1.5,
+		SnapToGrid:  &snapToGridFalse,
+	}
+
+	props := createParagraphProperties(config)
+
+	if props == nil {
+		t.Fatal("createParagraphProperties 返回了 nil")
+	}
+
+	// 检查 SnapToGrid 设置
+	if props.SnapToGrid == nil {
+		t.Error("SnapToGrid 应该被设置")
+	} else {
+		if props.SnapToGrid.Val != "0" {
+			t.Errorf("SnapToGrid.Val 设置不正确，期望 '0'，实际 '%s'", props.SnapToGrid.Val)
+		}
+	}
+
+	// 检查行间距
+	if props.Spacing == nil {
+		t.Error("间距属性未设置")
+	} else {
+		if props.Spacing.Line != "360" { // 1.5 * 240
+			t.Errorf("行间距设置不正确，期望 '360'，实际 '%s'", props.Spacing.Line)
+		}
+		if props.Spacing.LineRule != "auto" {
+			t.Errorf("LineRule 设置不正确，期望 'auto'，实际 '%s'", props.Spacing.LineRule)
+		}
+	}
+
+	// 测试 SnapToGrid = true 时不设置（保持默认）
+	snapToGridTrue := true
+	configWithGridEnabled := &QuickParagraphConfig{
+		Alignment:   "left",
+		LineSpacing: 1.5,
+		SnapToGrid:  &snapToGridTrue,
+	}
+
+	propsWithGrid := createParagraphProperties(configWithGridEnabled)
+
+	if propsWithGrid.SnapToGrid != nil {
+		t.Error("当 SnapToGrid = true 时，不应该设置 SnapToGrid 属性（保持默认行为）")
+	}
+
+	// 测试 SnapToGrid = nil 时不设置
+	configWithoutGrid := &QuickParagraphConfig{
+		Alignment:   "left",
+		LineSpacing: 1.5,
+		SnapToGrid:  nil,
+	}
+
+	propsWithoutGrid := createParagraphProperties(configWithoutGrid)
+
+	if propsWithoutGrid.SnapToGrid != nil {
+		t.Error("当 SnapToGrid = nil 时，不应该设置 SnapToGrid 属性")
+	}
+}

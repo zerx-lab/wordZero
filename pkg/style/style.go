@@ -64,6 +64,7 @@ type ParagraphProperties struct {
 	PageBreak       *PageBreak       `xml:"w:pageBreakBefore,omitempty"`
 	ParagraphBorder *ParagraphBorder `xml:"w:pBdr,omitempty"`
 	Shading         *Shading         `xml:"w:shd,omitempty"`
+	SnapToGrid      *SnapToGrid      `xml:"w:snapToGrid,omitempty"`
 	Spacing         *Spacing         `xml:"w:spacing,omitempty"`
 	Indentation     *Indentation     `xml:"w:ind,omitempty"`
 	Justification   *Justification   `xml:"w:jc,omitempty"`
@@ -206,6 +207,13 @@ type PageBreak struct {
 type OutlineLevel struct {
 	XMLName xml.Name `xml:"w:outlineLvl"`
 	Val     string   `xml:"w:val,attr"`
+}
+
+// SnapToGrid 网格对齐设置
+// 设置为 "0" 或 "false" 时禁用网格对齐，允许自定义行间距生效
+type SnapToGrid struct {
+	XMLName xml.Name `xml:"w:snapToGrid"`
+	Val     string   `xml:"w:val,attr,omitempty"`
 }
 
 type Bold struct {
@@ -1464,6 +1472,13 @@ func (sm *StyleManager) cloneParagraphProperties(source *ParagraphProperties) *P
 	if source.OutlineLevel != nil {
 		cloned.OutlineLevel = &OutlineLevel{
 			Val: source.OutlineLevel.Val,
+		}
+	}
+
+	// 复制网格对齐设置
+	if source.SnapToGrid != nil {
+		cloned.SnapToGrid = &SnapToGrid{
+			Val: source.SnapToGrid.Val,
 		}
 	}
 

@@ -158,12 +158,13 @@ type QuickStyleConfig struct {
 // QuickParagraphConfig 快速段落配置
 type QuickParagraphConfig struct {
 	Alignment       string  `json:"alignment,omitempty"`       // left, center, right, justify
-	LineSpacing     float64 `json:"lineSpacing,omitempty"`     // 行间距倍数
+	LineSpacing     float64 `json:"lineSpacing,omitempty"`     // 行间距倍数（如1.5表示1.5倍行距，240单位对应单倍行距）
 	SpaceBefore     int     `json:"spaceBefore,omitempty"`     // 段前间距（磅）
 	SpaceAfter      int     `json:"spaceAfter,omitempty"`      // 段后间距（磅）
 	FirstLineIndent int     `json:"firstLineIndent,omitempty"` // 首行缩进（磅）
 	LeftIndent      int     `json:"leftIndent,omitempty"`      // 左缩进（磅）
 	RightIndent     int     `json:"rightIndent,omitempty"`     // 右缩进（磅）
+	SnapToGrid      *bool   `json:"snapToGrid,omitempty"`      // 是否对齐网格（设置为false可禁用网格对齐，使行间距精确生效）
 }
 
 // QuickRunConfig 快速字符配置
@@ -212,6 +213,12 @@ func createParagraphProperties(config *QuickParagraphConfig) *ParagraphPropertie
 	// 对齐方式
 	if config.Alignment != "" {
 		props.Justification = &Justification{Val: config.Alignment}
+	}
+
+	// 网格对齐设置
+	// 当设置为false时，禁用网格对齐，使自定义行间距能够精确生效
+	if config.SnapToGrid != nil && !*config.SnapToGrid {
+		props.SnapToGrid = &SnapToGrid{Val: "0"}
 	}
 
 	// 间距设置

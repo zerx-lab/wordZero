@@ -105,6 +105,7 @@ type ParagraphProperties struct {
 	NumberingProperties *NumberingProperties `xml:"w:numPr,omitempty"`
 	ParagraphBorder     *ParagraphBorder     `xml:"w:pBdr,omitempty"`
 	Tabs                *Tabs                `xml:"w:tabs,omitempty"`
+	SnapToGrid          *SnapToGrid          `xml:"w:snapToGrid,omitempty"` // 网格对齐设置
 	Spacing             *Spacing             `xml:"w:spacing,omitempty"`
 	Indentation         *Indentation         `xml:"w:ind,omitempty"`
 	Justification       *Justification       `xml:"w:jc,omitempty"`
@@ -113,6 +114,13 @@ type ParagraphProperties struct {
 	PageBreakBefore     *PageBreakBefore     `xml:"w:pageBreakBefore,omitempty"` // 段前分页
 	WidowControl        *WidowControl        `xml:"w:widowControl,omitempty"`    // 孤行控制
 	OutlineLevel        *OutlineLevel        `xml:"w:outlineLvl,omitempty"`      // 大纲级别
+}
+
+// SnapToGrid 网格对齐设置
+// 设置为 "0" 或 "false" 时禁用网格对齐，允许自定义行间距生效
+type SnapToGrid struct {
+	XMLName xml.Name `xml:"w:snapToGrid"`
+	Val     string   `xml:"w:val,attr,omitempty"`
 }
 
 // ParagraphBorder 段落边框
@@ -1472,6 +1480,39 @@ func (p *Paragraph) SetOutlineLevel(level int) {
 	Debugf("设置段落大纲级别: %d", level)
 }
 
+// SetSnapToGrid 设置段落的网格对齐属性。
+//
+// 网格对齐控制段落的行是否对齐到文档的网格。当文档启用了网格设置时
+// （如中文文档中常见的"如果定义了文档网格，则对齐到网格"选项），
+// 自定义的行间距可能不会精确生效，因为行会自动对齐到网格线。
+//
+// 通过设置 snapToGrid 为 false，可以禁用该段落的网格对齐，
+// 从而使自定义行间距能够精确生效。
+//
+// 参数：
+//   - snapToGrid: true表示启用网格对齐（默认），false表示禁用网格对齐
+//
+// 示例：
+//
+//	// 禁用网格对齐，使自定义行间距精确生效
+//	para := doc.AddParagraph("这段文字使用精确的行间距")
+//	para.SetSpacing(&document.SpacingConfig{LineSpacing: 1.5})
+//	para.SetSnapToGrid(false)  // 禁用网格对齐
+func (p *Paragraph) SetSnapToGrid(snapToGrid bool) {
+	if p.Properties == nil {
+		p.Properties = &ParagraphProperties{}
+	}
+
+	if !snapToGrid {
+		p.Properties.SnapToGrid = &SnapToGrid{Val: "0"}
+		Debugf("禁用段落网格对齐")
+	} else {
+		// 启用网格对齐时移除设置（使用默认行为）
+		p.Properties.SnapToGrid = nil
+		Debugf("启用段落网格对齐（默认）")
+	}
+}
+
 // ParagraphFormatConfig 段落格式配置
 //
 // 此结构体提供了段落所有格式属性的统一配置接口，
@@ -1493,10 +1534,11 @@ type ParagraphFormatConfig struct {
 	RightCm     float64 // 右缩进（厘米）
 
 	// 分页与控制
-	KeepWithNext    bool // 与下一段落保持在同一页
-	KeepLines       bool // 段落中的所有行保持在同一页
-	PageBreakBefore bool // 段前分页
-	WidowControl    bool // 孤行控制
+	KeepWithNext    bool  // 与下一段落保持在同一页
+	KeepLines       bool  // 段落中的所有行保持在同一页
+	PageBreakBefore bool  // 段前分页
+	WidowControl    bool  // 孤行控制
+	SnapToGrid      *bool // 是否对齐网格（设置为false可禁用网格对齐，使自定义行间距精确生效）
 
 	// 大纲级别
 	OutlineLevel int // 大纲级别（0-8，0表示正文，1-8对应标题1-8）
@@ -1570,6 +1612,11 @@ func (p *Paragraph) SetParagraphFormat(config *ParagraphFormatConfig) {
 	p.SetKeepLines(config.KeepLines)
 	p.SetPageBreakBefore(config.PageBreakBefore)
 	p.SetWidowControl(config.WidowControl)
+
+	// 设置网格对齐
+	if config.SnapToGrid != nil {
+		p.SetSnapToGrid(*config.SnapToGrid)
+	}
 
 	// 设置大纲级别
 	if config.OutlineLevel >= 0 && config.OutlineLevel <= 8 {
