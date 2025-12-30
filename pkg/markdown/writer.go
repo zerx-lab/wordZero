@@ -256,7 +256,7 @@ func (w *MarkdownWriter) writeTable(table *document.Table) error {
 
 		// 写分隔行
 		w.output.WriteString("|")
-		for range headerRow.Cells {
+		for i := 0; i < len(headerRow.Cells); i++ {
 			w.output.WriteString("-----|")
 		}
 		w.output.WriteString("\n")
