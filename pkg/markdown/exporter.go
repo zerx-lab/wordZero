@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ZeroHawkeye/wordZero/pkg/document"
+	"github.com/zerx-lab/wordZero/pkg/document"
 )
 
 // WordToMarkdownExporter Word到Markdown导出器接口

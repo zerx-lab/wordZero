@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ZeroHawkeye/wordZero/pkg/style"
+	"github.com/zerx-lab/wordZero/pkg/style"
 )
 
 // Document 表示一个Word文档

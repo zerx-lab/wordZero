@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ZeroHawkeye/wordZero/pkg/document"
+	"github.com/zerx-lab/wordZero/pkg/document"
 )
 
 // createSampleImageWithText 创建带文字的示例图片

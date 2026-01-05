@@ -8,7 +8,7 @@ import (
 "image/png"
 "log"
 
-"github.com/ZeroHawkeye/wordZero/pkg/document"
+"github.com/zerx-lab/wordZero/pkg/document"
 )
 
 // createTestImage 创建一个简单的测试图片

@@ -24,7 +24,7 @@ WordZero 的样式管理包提供了完整的 Word 文档样式系统实现，�
 ## 📦 安装使用
 
 ```go
-import "github.com/ZeroHawkeye/wordZero/pkg/style"
+import "github.com/zerx-lab/wordZero/pkg/style"
 ```
 
 ## 🚀 快速开始
@@ -68,7 +68,7 @@ if err == nil {
 ### 在文档中应用样式
 
 ```go
-import "github.com/ZeroHawkeye/wordZero/pkg/document"
+import "github.com/zerx-lab/wordZero/pkg/document"
 
 // 创建文档
 doc := document.New()
@@ -381,8 +381,8 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/ZeroHawkeye/wordZero/pkg/document"
-    "github.com/ZeroHawkeye/wordZero/pkg/style"
+    "github.com/zerx-lab/wordZero/pkg/document"
+    "github.com/zerx-lab/wordZero/pkg/style"
 )
 
 func main() {

@@ -12,7 +12,7 @@ import (
 
 	mathjax "github.com/litao91/goldmark-mathjax"
 
-	"github.com/ZeroHawkeye/wordZero/pkg/document"
+	"github.com/zerx-lab/wordZero/pkg/document"
 )
 
 // MarkdownConverter Markdown转换器接口

@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ZeroHawkeye/wordZero/pkg/style"
+	"github.com/zerx-lab/wordZero/pkg/style"
 )
 
 // assertParagraphContent 验证段落的文本内容（带边界检查）

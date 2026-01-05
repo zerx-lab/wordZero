@@ -10,7 +10,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/ZeroHawkeye/wordZero/pkg/document"
+	"github.com/zerx-lab/wordZero/pkg/document"
 )
 
 // createSampleImageWithColor 创建指定颜色的示例图片数据

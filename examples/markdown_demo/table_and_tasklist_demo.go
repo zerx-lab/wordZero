@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ZeroHawkeye/wordZero/pkg/markdown"
+	"github.com/zerx-lab/wordZero/pkg/markdown"
 )
 
 func main() {
@@ -38,7 +38,7 @@ func main() {
 
 这是一个[外部链接](https://github.com)的示例。
 
-这是一个[WordZero项目链接](https://github.com/ZeroHawkeye/wordZero)。
+这是一个[WordZero项目链接](https://github.com/zerx-lab/wordZero)。
 
 ## 3. 列表功能
 
@@ -119,7 +119,7 @@ package main
 
 import (
     "fmt"
-    "github.com/ZeroHawkeye/wordZero/pkg/markdown"
+    "github.com/zerx-lab/wordZero/pkg/markdown"
 )
 
 func main() {
@@ -215,7 +215,7 @@ function convertMarkdown(content) {
 
 1. **第一步：环境准备**
    - 安装Go语言环境（版本 >= 1.19）
-   - 克隆项目：` + "`git clone https://github.com/ZeroHawkeye/wordZero.git`" + `
+   - 克隆项目：` + "`git clone https://github.com/zerx-lab/wordZero.git`" + `
    - 下载依赖：` + "`go mod download`" + `
 
 2. **第二步：配置设置**

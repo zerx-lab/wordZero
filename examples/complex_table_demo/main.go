@@ -11,7 +11,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/ZeroHawkeye/wordZero/pkg/document"
+	"github.com/zerx-lab/wordZero/pkg/document"
 )
 
 func main() {
