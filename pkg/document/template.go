@@ -1975,17 +1975,17 @@ func (te *TemplateEngine) processDocumentLevelLoops(doc *Document, data *Templat
 
 										// 如果内容不为空，创建新段落
 										if strings.TrimSpace(content) != "" {
-											newPara.Runs = []Run{{
-												Text: Text{Content: content},
-												Properties: &RunProperties{
-													FontFamily: &FontFamily{
-														ASCII:    "仿宋",
-														HAnsi:    "仿宋",
-														EastAsia: "仿宋",
-													},
-													Bold: &Bold{},
-												},
-											}}
+											// 保留原始段落的样式，不强制设置粗体 (Fix for Issue #88)
+											if len(newPara.Runs) > 0 {
+												// 保留原始Run的属性
+												newPara.Runs[0].Text.Content = content
+												newPara.Runs = newPara.Runs[:1]
+											} else {
+												// 如果没有原始Run，创建一个不带样式的新Run
+												newPara.Runs = []Run{{
+													Text: Text{Content: content},
+												}}
+											}
 											newElements = append(newElements, newPara)
 										}
 									}
@@ -2757,6 +2757,50 @@ func (te *TemplateEngine) processImagePlaceholders(doc *Document, data *Template
 			if len(newElements) > 1 || (len(newElements) == 1 && newElements[0] != elem) {
 				// 移除原段落，插入新元素（可能包含图片段落）
 				doc.Body.Elements = append(doc.Body.Elements[:i], append(newElements, doc.Body.Elements[i+1:]...)...)
+			}
+		case *Table:
+			// 处理表格中的图片占位符 (Fix for Issue #91)
+			if err := te.processImagePlaceholdersInTable(elem, data, doc); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// processImagePlaceholdersInTable 处理表格中的图片占位符 (Fix for Issue #91)
+func (te *TemplateEngine) processImagePlaceholdersInTable(table *Table, data *TemplateData, doc *Document) error {
+	for rowIdx := range table.Rows {
+		for cellIdx := range table.Rows[rowIdx].Cells {
+			cell := &table.Rows[rowIdx].Cells[cellIdx]
+			// 处理单元格中的每个段落
+			for paraIdx := range cell.Paragraphs {
+				para := &cell.Paragraphs[paraIdx]
+				newElements, err := te.processImagePlaceholdersInParagraph(para, data, doc)
+				if err != nil {
+					return err
+				}
+
+				// 如果有图片替换
+				if len(newElements) > 0 {
+					// 检查返回的元素是否与原段落不同
+					if len(newElements) == 1 {
+						if newPara, ok := newElements[0].(*Paragraph); ok {
+							cell.Paragraphs[paraIdx] = *newPara
+						}
+					} else {
+						// 多个元素的情况：替换当前段落为第一个，其余追加
+						newParagraphs := make([]Paragraph, 0, len(cell.Paragraphs)-1+len(newElements))
+						newParagraphs = append(newParagraphs, cell.Paragraphs[:paraIdx]...)
+						for _, elem := range newElements {
+							if p, ok := elem.(*Paragraph); ok {
+								newParagraphs = append(newParagraphs, *p)
+							}
+						}
+						newParagraphs = append(newParagraphs, cell.Paragraphs[paraIdx+1:]...)
+						cell.Paragraphs = newParagraphs
+					}
+				}
 			}
 		}
 	}
